@@ -2,6 +2,7 @@ from django.urls import path, include
 from django.contrib.auth import views as auth_views
 from . import views as user_views
 from allauth.account.views import SignupView
+from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     path("accounts/", include("allauth.urls")),
@@ -32,4 +33,5 @@ urlpatterns = [
     path("login-redirect/", user_views.login_redirect, name="login-redirect"),
     path("profile/", user_views.profile, name="profile"),
     path("profile/edit/", user_views.edit_profile, name="edit-profile"),
+    path('logout/', LogoutView.as_view(), name='logout'),
 ]

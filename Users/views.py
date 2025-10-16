@@ -5,6 +5,17 @@ from .models import BaseUser, CustomerUser, VendorUser
 from django.urls import resolve
 from django.contrib.auth.decorators import login_required
 from .decorators import already_logged
+from django.contrib.auth.views import LogoutView
+from django.db.models import Q, Count, Avg
+from django.core.paginator import Paginator
+from sale.models import Item, Category
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.views.decorators.http import require_http_methods
+
+class CustomLogoutView(LogoutView):
+    def get(self, request, *args, **kwargs):
+        return self.post(request, *args, **kwargs)
 
 
 def storefront(request):
@@ -109,3 +120,32 @@ def complete_profile(request):
         form = UserProfileForm(instance=request.user)
 
     return render(request, "Users/complete_profile.html", {"form": form})
+
+
+def home(request):
+    items = Item.objects.all()
+    query = request.GET.get('q', '')
+    
+    # Search functionality
+    if query:
+        items = Item.objects.filter(
+            Q(item_title__icontains=query) |
+            Q(item_description__icontains=query)
+        ).distinct()
+        print(f"Search query: {query}")  # Debug print
+        print(f"Found {items.count()} items")  # Debug print
+    
+    context = {
+        'items': items,
+        'query': query,
+    }
+    return render(request, 'Users/home.html', context)
+
+
+@require_http_methods(["GET", "POST"])
+def logout_view(request):
+    if request.method == 'POST':
+        # Handle logout
+        logout(request)
+        return redirect('login')
+    return render(request, 'Users/logout.html')

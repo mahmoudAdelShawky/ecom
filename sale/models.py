@@ -5,12 +5,22 @@ from Users.models import VendorUser, CustomerUser
 from decimal import Decimal
 from django.db.models import Avg
 
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
 
 class Item(models.Model):
     vendor = models.ForeignKey(
         VendorUser, on_delete=models.CASCADE, related_name="items"
     )
-    item_title = models.CharField(max_length=255)
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, related_name="items"
+    )
+    item_title = models.CharField(max_length=255, db_index=True)
     item_image = models.ImageField(upload_to="media")
     item_price = models.DecimalField(
         max_digits=10,
@@ -34,14 +44,24 @@ class Item(models.Model):
     def __str__(self):
         return self.item_title
 
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        if self.item_image:
+            img = Image.open(self.item_image.path)
+            if img.height > 300 or img.width > 300:
+                output_size = (300, 300)
+                img.thumbnail(output_size)
+                img.save(self.item_image.path)
 
-        img = Image.open(self.item_image)
-        if img.height > 300 or img.width > 300:
-            output_size = (300, 300)
-            img.thumbnail(output_size)
-            img.save(self.item_image)
+    # def save(self, *args, **kwargs):
+    #     super().save(*args, **kwargs)
+
+        # img = Image.open(self.item_image)
+        # if img.height > 300 or img.width > 300:
+        #     output_size = (300, 300)
+        #     img.thumbnail(output_size)
+        # img.save(self.item_image)
 
     @property
     def selling_price(self):

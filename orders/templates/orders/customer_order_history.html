@@ -1,30 +1,112 @@
 {% extends 'Users/base.html' %}
+{% load static %}
 
 {% block content %}
-  <h1>Order History</h1>
+<div class="container py-4">
+    <h1 class="mb-4 fw-bold text-primary">Order History</h1>
+    
+    {% if orders %}
+    <div class="row d-none d-md-flex">
+        <div class="col-12">
+            <!-- Desktop Table -->
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">Your Orders</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="py-3 px-4">Order ID</th>
+                                    <th class="py-3 px-4">Date</th>
+                                    <th class="py-3 px-4">Amount</th>
+                                    <th class="py-3 px-4 text-end">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr class="align-middle">
+                                    <td class="px-4 fw-medium">#{{ order.pk }}</td>
+                                    <td class="px-4">{{ order.order_date|date:"M d, Y H:i" }}</td>
+                                    <td class="px-4 text-success fw-bold">EGPP{{ order.total_bill }}</td>
+                                    <td class="px-4 text-end">
+                                        <a href="{% url 'customer-order-details' order.pk %}" 
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            View <i class="fas fa-chevron-right ms-2 small"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  {% if orders %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Order Date</th>
-          <th>Total Bill</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order in orders %}
-          <tr>
-            <td>{{ order.pk }}</td>
-            <td>{{ order.order_date }}</td>
-            <td>${{ order.total_bill }}</td>
-            <td><a href="{% url 'customer-order-details' order.pk %}">View Details</a></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No orders found</p>
-  {% endif %}
+    <!-- Mobile List -->
+    <div class="row d-md-none">
+        <div class="col-12">
+            <div class="list-group">
+                {% for order in orders %}
+                <div class="list-group-item shadow-sm mb-3 rounded-3 border-0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-primary rounded-pill">#{{ order.pk }}</span>
+                        <small class="text-muted">{{ order.order_date|date:"M d, Y" }}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0 text-success fw-bold">EGPP{{ order.total_bill }}</h6>
+                            <small class="text-muted">{{ order.order_date|date:"H:i" }}</small>
+                        </div>
+                        <a href="{% url 'customer-order-details' order.pk %}" 
+                           class="btn btn-sm btn-link text-primary p-0">
+                            Details <i class="fas fa-arrow-right ms-1 small"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info rounded-3 shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle me-3"></i>
+            <div>No orders found in your history. Start shopping now!</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-4 text-center">
+        <a href="{% url 'front' %}" class="btn btn-outline-primary rounded-pill px-4">
+            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .table th { font-size: 0.875rem; }
+        .table td { font-size: 0.825rem; }
+        h1 { font-size: 1.75rem; }
+    }
+    
+    .list-group-item {
+        transition: transform 0.2s ease;
+    }
+    
+    .list-group-item:hover {
+        transform: translateX(5px);
+        background-color: #f8f9fa;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+    }
+</style>
 {% endblock %}

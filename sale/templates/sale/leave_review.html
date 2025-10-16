@@ -2,12 +2,55 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <div class="container">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form|crispy }}
-
-            <input class="btn btn-success" type="submit" value="Submit" />
-        </form>
+<div class="review-container">
+    <div class="card">
+        <div class="card-body">
+            <h2 class="card-title">Leave a Review</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input class="btn btn-success submit-button" type="submit" value="Submit" />
+            </form>
+        </div>
     </div>
+</div>
+
+<style>
+.review-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.submit-button {
+    background: #28a745;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: var(--white);
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}
+</style>
 {% endblock content %}

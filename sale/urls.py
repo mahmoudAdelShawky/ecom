@@ -1,5 +1,9 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
+
+
 
 urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
@@ -14,4 +18,7 @@ urlpatterns = [
     path("item/review/<int:item_id>", views.leave_review, name="leave-review"),
     path("item/random/", views.random_item, name="random-item"),
     path("sales-report/", views.sales_report, name="sales-report"),
+    path('ajax/search-suggestions/', views.ajax_search_suggestions, name='ajax_search_suggestions'),
 ]
+# if settings.DEBUG:
+#     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

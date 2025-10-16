@@ -25,12 +25,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("SECRET_KEY")
+SECRET_KEY = "django-insecure-@2ytg3gf%#2!jh$2zmz7#tjf9mbql!7p@38%y58t@j@!)v@j^r"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["localhost", "eurekamart.me", "40.80.89.74"]
+ALLOWED_HOSTS = ['R&A_shop.pythonanywhere.com']
+
 
 
 # Application definition
@@ -54,6 +55,8 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "import_export",
     "storages",
+    'django_mailjet',
+
 ]
 
 MIDDLEWARE = [
@@ -63,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",  # Add this line
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -81,6 +85,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
+
         },
     },
 ]
@@ -94,11 +99,11 @@ WSGI_APPLICATION = "ecom.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DBNAME"),
-        "USER": env("DBUSER"),
-        "PASSWORD": env("DBPASS"),
-        "HOST": env("DBHOST"),
-        "PORT": env("DBPORT"),
+        "NAME": "ecommerce_db",
+        "USER": "postgres",
+        "PASSWORD": "root",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -138,14 +143,17 @@ USE_TZ = True
 
 DEFAULT_FILE_STORAGE = "ecom.custom_azure.AzureMediaStorage"
 STATICFILES_STORAGE = "ecom.custom_azure.AzureStaticStorage"
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATIC_LOCATION = "static"
 MEDIA_LOCATION = "media"
 
-AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME")
-AZURE_CUSTOM_DOMAIN = f"{AZURE_ACCOUNT_NAME}.blob.core.windows.net"
-STATIC_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
-MEDIA_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{MEDIA_LOCATION}/"
+# AZURE_ACCOUNT_NAME = env("AZURE_ACCOUNT_NAME")
+# AZURE_CUSTOM_DOMAIN = f"{AZURE_ACCOUNT_NAME}.blob.core.windows.net"
+# STATIC_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{STATIC_LOCATION}/"
+# MEDIA_URL = f"https://{AZURE_CUSTOM_DOMAIN}/{MEDIA_LOCATION}/"
 CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 
@@ -157,7 +165,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "Users.BaseUser"
 
 LOGIN_REDIRECT_URL = "login-redirect"
-LOGOUT_REDIRECT_URL = "logout"
+LOGOUT_REDIRECT_URL = "/"
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = "login-redirect"
 LOGIN_URL = "login"
@@ -181,9 +189,20 @@ SOCIALACCOUNT_PROVIDERS = {
 
 SITE_ID = 6
 
-MAILJET_API_KEY = env("MAILJET_API_KEY")
-MAILJET_API_SECRET = env("MAILJET_API_SECRET")
-EMAIL_BACKEND = "django_mailjet.backends.MailjetBackend"
+# MAILJET_API_KEY = env("MAILJET_API_KEY")
+# MAILJET_API_SECRET = env("MAILJET_API_SECRET")
+# MAILJET_API_KEY = '1ec3a8b5f6d5581e99dee488d2f2f97e'
+# MAILJET_API_SECRET = '864694d64d790b5561719a865bd1cb8f'
+# EMAIL_BACKEND = 'django_mailjet.backends.MailjetBackend'
+DEFAULT_FROM_EMAIL = 'R&Amarket@gmail.com'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'mahmoudashawky197@gmail.com'  # Your Gmail
+EMAIL_HOST_PASSWORD = 'lhdj kryw totx nejy'
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SESSION_COOKIE_SECURE = True
@@ -191,14 +210,26 @@ EMAIL_BACKEND = "django_mailjet.backends.MailjetBackend"
 if "WEBSITE_HOSTNAME" in os.environ:
     from .azure import *
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:1337",
-    "http://eurekamart.me",
-    "https://eurekamart.me",
-    "http://eurekamart.me:1337",
+    "http://localhost:8000",
+    "http://192.168.1.8:8000",
+    "https://R&Amart.me",
+    "http://R&A.me:1337",
 ]
 CORS_ORIGIN_WHITELIST = [
-    "http://localhost:1337",
-    "http://eurekamart.me:1337",
-    "https://eurekamart.me",
-    "http://eurekamart.me:1337",
+    "http://localhost:8000",
+    "http://192.168.1.4:8000",
+    "https://R&Amart.me",
+    "http://R&Amart.me:1337",
 ]
+
+# Server Timeout Settings
+CONN_MAX_AGE = 60  # 60 seconds
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB
+TIMEOUT = 300  # 5 minutes
+
+# Development server settings
+if DEBUG:
+    RUNSERVERPLUS_SERVER_ADDRESS_PORT = '0.0.0.0:8000'
+    RUNSERVERPLUS_SERVER_TIMEOUT = 300
+
+

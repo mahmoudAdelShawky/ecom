@@ -1,13 +1,15 @@
 from django.urls import path
 from . import views
 
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path("cart/", views.cart_details, name="cart-details"),
     path("cart/add/<int:item_id>/", views.add_to_cart, name="add-to-cart"),
     path(
-        "cart/delete/<int:cart_item_id>/", views.remove_from_cart, name="removed-item"
+        "cart/delete/<int:cart_item_id>/", views.remove_from_cart, name="remove-from-cart"
     ),
-    path("order/create/", views.create_order, name="create-order"),
+    path("order/create/", views.create_order, name="create_order"),
     path(
         "order/details/<int:order_id>/",
         views.customer_order_details,
@@ -29,4 +31,7 @@ urlpatterns = [
         views.remove_from_wishlist,
         name="remove-from-wishlist",
     ),
+    path("update-cart-quantity/<int:cart_item_id>/<str:action>/", views.update_cart_quantity, name="update-cart-quantity"),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

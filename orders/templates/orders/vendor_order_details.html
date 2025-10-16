@@ -1,49 +1,160 @@
 {% extends 'Users/base.html' %}
+{% load static %}
 
 {% block content %}
-  <div class="container">
+<div class="container py-5">
     <div class="row">
-      <div class="col-md-8 offset-md-2">
-        <h1>Order Details</h1>
-
-        <div class="card">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted text-lg-right">Order ID: {{ order.pk }}</h6>
-            <h5 class="card-subtitle mb-2 text-muted text-lg-right">{{ order.order_date }}</h5>
-
-            <div class="mt-4">
-              <h3 class="mb-4">Items Sold:</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for order_item in order_items %}
-                    <tr>
-                      <td>{{ order_item.item.item_title }}</td>
-                      <td>${{ order_item.item_price }}</td>
-                      <td>{{ order_item.quantity }}</td>
-                      <td>${{ order_item.total_iprice }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+        <div class="col-lg-10 col-xl-8 mx-auto">
+            <!-- Order Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">Order Details</h1>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
             </div>
 
-            <div class="mt-4">
-              <h3>Total Earnt: ${{ total_earned }}</h3><br><br>
-              <h4 class="card-subtitle mb-2 "> Customer: {{ order.customer.user.username }}</h4>
-              <h7 class="card-subtitle mb-2 text-muted "> Order delivered at- {{ order.customer.user.address }}</h7><br>
-              <h7 class="card-subtitle mb-2 text-muted ">Customer's Phone Number: {{ order.customer.user.phone_number }}</h7>
+            <!-- Order Card -->
+            <div class="card shadow-lg rounded-3 border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="h5 mb-1">Order #{{ order.pk }}</h2>
+                            <p class="mb-0 small">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                {{ order.order_date|date:"M d, Y H:i" }}
+                            </p>
+                        </div>
+                        <span class="badge bg-white text-primary">Completed</span>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Order Items -->
+                    <div class="mb-5">
+                        <h3 class="h5 mb-4">
+                            <i class="fas fa-box-open me-2"></i>Items Sold
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th>Item</th>
+                                        <th class="text-end">Price</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order_item in order_items %}
+                                    <tr>
+                                        <td>{{ order_item.item.item_title }}</td>
+                                        <td class="text-end">EGP{{ order_item.item_price }}</td>
+                                        <td class="text-end">{{ order_item.quantity }}</td>
+                                        <td class="text-end fw-bold">EGP{{ order_item.total_iprice }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="border-top pt-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-4 mb-md-0">
+                                <h4 class="h6 mb-3">
+                                    <i class="fas fa-user me-2"></i>Customer Details
+                                </h4>
+                                <div class="bg-light p-3 rounded-2">
+                                    <p class="mb-2">
+                                        {{ order.customer.user.username }}<br>
+                                        <span class="text-muted small">
+                                            <i class="fas fa-phone me-2"></i>
+                                            {{ order.customer.user.phone_number }}
+                                        </span>
+                                    </p>
+                                    <p class="mb-0 small text-muted">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        {{ order.customer.user.address }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h4 class="h6 mb-3">
+                                    <i class="fas fa-receipt me-2"></i>Order Summary
+                                </h4>
+                                <div class="bg-light p-3 rounded-2">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal:</span>
+                                        <span>EGP{{ total_earned }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Service Fee:</span>
+                                        <span>EGP0.00</span> <!-- Add actual fee if applicable -->
+                                    </div>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total Earned:</span>
+                                        <span class="text-success">EGP{{ total_earned }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    
+    .table tbody td {
+        vertical-align: middle;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            border: 0;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .table td {
+            display: block;
+            text-align: right;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .table td::before {
+            content: attr(data-label);
+            float: left;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #6c757d;
+        }
+    }
+</style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 {% endblock %}

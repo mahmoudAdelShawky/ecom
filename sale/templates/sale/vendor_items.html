@@ -1,43 +1,160 @@
-  {% extends "Users/base.html" %}
+{% extends "Users/base.html" %}
+{% load static %}
 
-  {% block content %}
- 
-  <div class="container">
-    <h1>Your Products</h1>
-    <div class="row">
-      {% if items %}
-        {% for item in items %}
-        <div class="col-md-4 mb-4">
-          <div class="card">
-            <div class="card-img-container">
-              <img src="{{ item.item_image.url }}" alt="{{ item.item_title }}">
+{% block content %}
+<div class="container px-4 py-5">
+    <h1 class="mb-5 fw-bold display-4">Your Products</h1>
+    
+    <div class="row g-4">
+        {% if items %}
+            {% for item in items %}
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="product-card card h-100 border-0 shadow-sm hover-shadow-lg transition">
+                    <div class="card-img-top position-relative overflow-hidden">
+                        <img src="{{ item.item_image.url }}" 
+                             alt="{{ item.item_title }}" 
+                             class="img-fluid w-100 product-image">
+                        
+                        {% if item.item_discount %}
+                        <div class="badge bg-danger position-absolute top-0 end-0 m-2 px-3 py-2">
+                            SALE {{ item.item_discount }}%
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card-body d-flex flex-column pt-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h3 class="h5 mb-0">
+                                <a href="{% url 'item-detail' item.pk %}" 
+                                   class="text-dark text-decoration-none stretched-link">
+                                    {{ item.item_title }}
+                                </a>
+                            </h3>
+                            <div class="stock-status">
+                                {% if item.item_stock %}
+                                <span class="badge bg-success bg-opacity-10 text-success">In Stock</span>
+                                {% else %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Out of Stock</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted mb-4 flex-grow-1">{{ item.item_description|truncatechars:100 }}</p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="price">
+                                {% if item.item_discount %}
+                                <span class="h4 text-primary">EGP{{ item.selling_price }}</span>
+                                <small class="text-muted text-decoration-line-through ms-2">EGP{{ item.item_price }}</small>
+                                {% else %}
+                                <span class="h4 text-primary">EGP{{ item.item_price }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="ratings">
+                                {% if item.average_rating %}
+                                <small class="text-warning">
+                                    <i class="fas fa-star"></i> {{ item.average_rating|floatformat:1 }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="orders">
+                                <small class="text-muted">
+                                    <i class="fas fa-shopping-cart me-1"></i> {{ item.item_orders }} orders
+                                </small>
+                            </div>
+                            <div class="actions">
+                                <a href="{% url 'edit-item' item.pk %}" 
+                                   class="btn btn-sm btn-outline-secondary me-2">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'delete-item' item.pk %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-              <h5 class="card-title"><a href="{% url 'item-detail' item.pk %}">{{ item.item_title }}</a></h5>
-              <p class="card-text">{{ item.item_description }}</p>
-              {% if item.item_discount %}
-              <p class="card-text">Price: <s>${{ item.item_price }}</s> ${{ item.selling_price }}</p>
-              {% else %}
-              <p class="card-text">Price: ${{ item.item_price }}</p>
-              {% endif %}
-              {%if item.item_stock %}
-              <p class="card-text">Stock: {{ item.item_stock }}</p>
-              {% else %}
-              <p class="card-text">Stock: <strong>Out of Stock</strong></p>
-              {% endif %}
-              <p class="card-text">Orders: {{ item.item_orders }}</p>
-              {% if item.average_rating  %}
-              <p class="card-text">Rating: {{ item.average_rating }}/5</p>
-              {% endif %}
-              <a class="btn btn-primary" href="{% url 'edit-item' item.pk %}">Edit</a>
-              <a class="btn btn-danger" href="{% url 'delete-item' item.pk %}">Delete</a>
+            {% endfor %}
+        {% else %}
+            <div class="col-12 text-center py-5">
+                <div class="empty-state">
+                    <img src="{% static 'images/empty-product.svg' %}" 
+                         alt="No products" 
+                         class="img-fluid mb-4"
+                         style="max-width: 300px;">
+                    <h3 class="h4 text-muted">No products found</h3>
+                    <p class="text-muted">Start by adding your first product</p>
+                    <a href="#" class="btn btn-primary mt-3">
+                        <i class="fas fa-plus me-2"></i>Add Product
+                    </a>
+                </div>
             </div>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-      <p>No orders found.</p>
-      {% endif %}
+        {% endif %}
     </div>
-  </div>
-  {% endblock content %}
+</div>
+
+<style>
+    .product-card {
+        border-radius: 16px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .product-image {
+        height: 250px;
+        object-fit: cover;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .hover-shadow-lg {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    
+    .hover-shadow-lg:hover {
+        box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1;
+    }
+    
+    .badge {
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    .price {
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    .empty-state {
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+    
+    .empty-state:hover {
+        opacity: 1;
+    }
+</style>
+
+<!-- Add Poppins font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+{% endblock content %}

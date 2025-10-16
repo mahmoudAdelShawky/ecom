@@ -31,4 +31,4 @@ To get a local copy up and running follow these simple example steps.
    ```sh
    python manage.py createsuperuser
    ```
-6. You'll all set to use EurekaMart!
+6. You'll all set to use R&A market!

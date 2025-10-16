@@ -2,16 +2,190 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-<div class="container">
-  <div class="card">
-    <div class="card-body">
-      <h2>Edit Profile</h2>
-      <form method="post">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button class="btn btn-primary" type="submit">Save Changes</button>
-      </form>
+
+<style>
+    .edit-profile-container {
+        padding: 3rem 1rem;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .edit-profile-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        background: white;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .edit-profile-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .edit-profile-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+
+    .edit-profile-header p {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control {
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .btn-save {
+        background: #6366f1;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-save:hover {
+        background: #4f46e5;
+        
+    }
+
+    .btn-save i {
+        font-size: 1rem;
+    }
+    @media (max-width: 768px) {
+        .edit-profile-container {
+            padding: 0.1rem 0.01rem;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+    
+        .edit-profile-card {
+            border: none;
+            border-radius: 20px;
+           
+            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+    
+        .edit-profile-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    
+        .edit-profile-header h2 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 0.4rem;
+        }
+    
+        .edit-profile-header p {
+            color: #718096;
+            font-size: 0.7rem;
+        }
+    
+        .form-group {
+            margin-bottom: 1rem;
+        }
+    
+        .form-group label {
+            font-weight: 400;
+            color: #4a5568;
+            margin-bottom: 0.4rem;
+            font-size: 0.7rem;
+        }
+    
+        .form-control {
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+    
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+    
+        .btn-save {
+            background: #6366f1;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.7rem;
+        }
+    
+        .btn-save:hover {
+            background: #4f46e5;
+            
+        }
+    
+        .btn-save i {
+            font-size: 1rem;
+        }   
+    }
+</style>
+
+<div class="edit-profile-container">
+    <div class="edit-profile-card">
+        <!-- Header -->
+        <div class="edit-profile-header">
+            <h2>Edit Profile</h2>
+            <p>Update your personal information below.</p>
+        </div>
+
+        <!-- Form -->
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form|crispy }}
+            </div>
+            <div class="text-center">
+                <button class="btn-save" type="submit">
+                    <i class="fas fa-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </form>
     </div>
-  </div>
 </div>
+
 {% endblock content %}

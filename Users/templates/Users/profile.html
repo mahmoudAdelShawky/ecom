@@ -1,15 +1,269 @@
 {% extends "Users/base.html" %}
 {% block content %}
-<div class="container">
-  <div class="card">
-    <div class="card-body">
-      <h2 class="card-title">{{ user.username }}</h2>
-      <p class="card-text"><strong>Name:</strong> {{ user.name }}</p>
-      <p class="card-text"><strong>Email:</strong> {{ user.email }}</p>
-      <p class="card-text"><strong>Phone Number:</strong> {{ user.phone_number }}</p>
-      <p class="card-text"><strong>Address:</strong> {{ user.address }}</p>
-      <a class="btn btn-primary" href="{% url 'edit-profile'%}">Edit</a>
+
+<style>
+    .profile-container {
+        padding: 3rem 1rem;
+        background: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .profile-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background: white;
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .profile-header {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        padding: 3rem 2rem;
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid white;
+        margin: 0 auto 1.5rem;
+        background-color: #e0e7ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #6366f1;
+    }
+
+    .profile-username {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+
+    .profile-details {
+        padding: 2rem;
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .detail-card {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: transform 0.2s ease;
+    }
+
+    .detail-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .detail-title {
+        color: #64748b;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .detail-content {
+        color: #1e293b;
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .edit-btn {
+        background: #6366f1;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.7rem;
+        transition: all 0.3s ease;
+        border: none;
+        font-weight: 500;
+    }
+
+    .edit-btn:hover {
+        background: #4f46e5;
+        
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .profile-details {
+            grid-template-columns: 1fr;
+        }
+        .profile-container {
+            padding: 0.1rem 0.01rem;
+            background: #f8f9fa;
+        
+
+        }
+    
+        .profile-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            background: white;
+            
+            margin: 0 auto;
+            position: relative;
+        }
+    
+        .profile-header {
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            padding: 0.8rem 0.5rem;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+    
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            margin: 0 auto 1.5rem;
+            background-color: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+    
+        .profile-username {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0.5rem 0;
+        }
+    
+        .profile-details {
+            padding: 1rem;
+            display: grid;
+            gap: 0.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+    
+        .detail-card {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            transition: transform 0.2s ease;
+        }
+    
+        .detail-card:hover {
+            transform: translateY(-3px);
+        }
+    
+        .detail-title {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+    
+        .detail-content {
+            color: #1e293b;
+            font-size: 0.6rem;
+            font-weight: 500;
+            margin: 0;
+        }
+    
+        .edit-btn {
+            background: #6366f1;
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            font-weight: 300;
+            font-size: 0.7rem;
+        }
+    
+        .edit-btn:hover {
+            background: #4f46e5;
+            
+            color: white;
+        }
+    }
+</style>
+
+<div class="profile-container">
+    <div class="profile-card">
+        <!-- Profile Header Section -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {{ user.username|slice:":1"|upper }}
+            </div>
+            <h2 class="profile-username">{{ user.username }}</h2>
+        </div>
+
+        
+        <!-- Profile Details Section -->
+        <div class="profile-details">
+            <div class="detail-card">
+                <div class="detail-title">
+                    <i class="fas fa-user-circle"></i>
+                    Full Name
+                </div>
+                <p class="detail-content">{{ user.name }}</p>
+            </div>
+
+            <div class="detail-card">
+                <div class="detail-title">
+                    <i class="fas fa-envelope"></i>
+                    Email Address
+                </div>
+                <p class="detail-content">{{ user.email }}</p>
+            </div>
+
+            <div class="detail-card">
+                <div class="detail-title">
+                    <i class="fas fa-phone"></i>
+                    Phone Number
+                </div>
+                <p class="detail-content">{{ user.phone_number }}</p>
+            </div>
+
+            <div class="detail-card">
+                <div class="detail-title">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Address
+                </div>
+                <p class="detail-content">{{ user.address }}</p>
+            </div>
+        </div>
+
+        <!-- Action Section -->
+        <div class="text-center py-4">
+            <a href="{% url 'edit-profile' %}" class="edit-btn">
+                <i class="fas fa-edit"></i>
+                Edit Profile
+            </a>
+        </div>
     </div>
-  </div>
 </div>
+
 {% endblock content %}

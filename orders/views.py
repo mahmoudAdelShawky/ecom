@@ -5,43 +5,45 @@ from Users.decorators import vendor_check, customer_check
 from django.contrib import messages
 from .forms import AddToCartForm
 from django.db.models import F
-from django.core.mail import send_mail
+import logging
+logger = logging.getLogger(__name__)
+# from django.core.mail import send_mail
+from django.core.mail import EmailMessage , send_mail
+# from django_mailjet import mail
+# views.py
+from django.db import transaction
 
 
+# def add_to_cart(request, item_id):
+#     item = Item.objects.select_for_update().get(pk=item_id)
+    # Rest of your logic
+@transaction.atomic
 @customer_check
 def add_to_cart(request, item_id):
-    item = get_object_or_404(Item, pk=item_id)
+    item = get_object_or_404(Item.objects.select_for_update(), pk=item_id)
     cart, created = Cart.objects.get_or_create(owner=request.user.customer)
     cart_item = CartItem.objects.filter(cart=cart, item=item).first()
 
-    if request.method == "POST":
-        form = AddToCartForm(request.POST)
-        if form.is_valid():
-            quantity = form.cleaned_data["quantity"]
-            if cart_item:
-                cart_item.quantity = quantity
-                cart_item.save()
-                messages.success(
-                    request,
-                    f"The quantity of {item.item_title} in your cart has been updated.",
-                )
-            else:
-                CartItem.objects.create(cart=cart, item=item, quantity=quantity)
-                messages.success(
-                    request, f"{quantity} {item.item_title} added to your cart."
-                )
-            return redirect("cart-details")
+    # Default quantity when adding directly from a button
+    default_quantity = 1
+
+    if cart_item:
+        # If item is already in cart, just increment quantity
+        cart_item.quantity += default_quantity
+        cart_item.save()
+        messages.success(
+            request,
+            f"Another {item.item_title} has been added to your cart. Total quantity: {cart_item.quantity}.",
+        )
     else:
-        initial_quantity = cart_item.quantity if cart_item else 0
-        form = AddToCartForm(initial={"quantity": initial_quantity})
+        # If item is not in cart, create a new CartItem
+        CartItem.objects.create(cart=cart, item=item, quantity=default_quantity)
+        messages.success(
+            request, f"{default_quantity} {item.item_title} added to your cart."
+        )
 
-    context = {
-        "item": item,
-        "form": form,
-        "current_quantity": cart_item.quantity if cart_item else 0,
-    }
-    return render(request, "orders/add_to_cart.html", context=context)
-
+    # Always redirect to cart details after adding
+    return redirect("cart-details")
 
 @customer_check
 def remove_from_cart(request, cart_item_id):
@@ -57,16 +59,21 @@ def remove_from_cart(request, cart_item_id):
     return render(request, "orders/remove_from_cart.html", context)
 
 
+
 @customer_check
 def cart_details(request):
     cart, created = Cart.objects.get_or_create(owner=request.user.customer)
     cart_items = cart.cart_items.all()
+    
+
     for cart_item in cart_items:
         cart_item.total_iprice = cart_item.item.selling_price * cart_item.quantity
-        if cart_item.item.item_stock < cart_item.quantity:
-            cart_item.stock = 0
+        # Check if item_stock is available and valid before comparison
+        if cart_item.item.item_stock is not None:
+            cart_item.stock_available = cart_item.item.item_stock >= cart_item.quantity
         else:
-            cart_item.stock = 1
+            # Handle cases where item_stock might be null or undefined
+            cart_item.stock_available = False # Or some other default behavior
 
     context = {
         "cart": cart,
@@ -75,6 +82,46 @@ def cart_details(request):
 
     return render(request, "orders/cart_details.html", context=context)
 
+# --- New views for managing quantities in cart ---
+
+@transaction.atomic
+@customer_check
+def update_cart_quantity(request, cart_item_id, action):
+    cart_item = get_object_or_404(CartItem.objects.select_for_update(), pk=cart_item_id)
+    
+    # Ensure the cart item belongs to the current user's cart
+    if cart_item.cart.owner != request.user.customer:
+        messages.error(request, "You do not have permission to modify this cart item.")
+        return redirect("cart-details")
+
+    if request.method == "POST":
+        if action == "increase":
+            if cart_item.item.item_stock is None or cart_item.quantity < cart_item.item.item_stock:
+                cart_item.quantity += 1
+                cart_item.save()
+                messages.success(request, f"Quantity of {cart_item.item.item_title} increased.")
+            else:
+                messages.warning(request, f"Maximum stock reached for {cart_item.item.item_title}.")
+        elif action == "decrease":
+            if cart_item.quantity > 1:
+                cart_item.quantity -= 1
+                cart_item.save()
+                messages.success(request, f"Quantity of {cart_item.item.item_title} decreased.")
+            else:
+                # If quantity becomes 0 or less, remove the item
+                cart_item.delete()
+                messages.info(request, f"{cart_item.item.item_title} removed from cart.")
+        else:
+            messages.error(request, "Invalid action.")
+    else:
+        messages.error(request, "Invalid request method.")
+
+    return redirect("cart-details")
+
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from django.conf import settings
 
 @customer_check
 def create_order(request):
@@ -82,6 +129,7 @@ def create_order(request):
     total_bill = cart.calculate_bill
     saving = cart.savings
 
+    # Existing validation checks
     if request.user.balance < total_bill:
         messages.warning(request, "Insufficient balance to place the order.")
         return redirect("cart-details")
@@ -92,8 +140,10 @@ def create_order(request):
         )
         return redirect("cart-details")
 
-    vendor_balances = {}
+    vendor_data = {}  # Stores vendor-specific data
+    order_items = []
 
+    # First pass: Validate stock and collect vendor data
     for cart_item in cart.cart_items.all():
         if cart_item.item.item_stock < cart_item.quantity:
             messages.warning(
@@ -102,49 +152,89 @@ def create_order(request):
             return redirect("cart-details")
 
         vendor = cart_item.item.vendor.user
-        vendor_balances[vendor] = vendor_balances.get(vendor, 0) + (
-            cart_item.quantity * cart_item.item.selling_price
-        )
+        if vendor not in vendor_data:
+            vendor_data[vendor] = {
+                'balance_change': 0,
+                'items': [],
+                'email': cart_item.item.vendor.user.email
+            }
+        
+        # Update vendor-specific data
+        vendor_data[vendor]['balance_change'] += cart_item.quantity * cart_item.item.selling_price
+        vendor_data[vendor]['items'].append(cart_item)
 
+        # Update item stock
         cart_item.item.item_stock -= cart_item.quantity
         cart_item.item.item_orders += cart_item.quantity
         cart_item.item.save()
 
+    # Create order
     order = Order.objects.create(
-        customer=request.user.customer, total_bill=total_bill, saving=saving
+        customer=request.user.customer, 
+        total_bill=total_bill, 
+        saving=saving
     )
-    order_items = []
 
-    for cart_item in cart.cart_items.all():
-        order_item = OrderItem(
+    # Create order items
+    order_items = [
+        OrderItem(
             order=order,
             item=cart_item.item,
             quantity=cart_item.quantity,
             item_price=cart_item.item.selling_price,
             item_title=cart_item.item.item_title,
         )
-        order_items.append(order_item)
-
+        for cart_item in cart.cart_items.all()
+    ]
     OrderItem.objects.bulk_create(order_items)
 
-    for vendor, balance_change in vendor_balances.items():
-        vendor.balance = F("balance") + balance_change
+    # Process vendors and send emails
+    for vendor, data in vendor_data.items():
+        # Update vendor balance
+        vendor.balance = F("balance") + data['balance_change']
         vendor.save()
 
-        send_mail(
-            subject=f"EurekaMart: New Order Recieved!",
-            from_email="f20221270@pilani.bits-pilani.ac.in",
-            message=f"You have recieved an order from {request.user.customer} on EurekaMart",
-            recipient_list=[cart_item.item.vendor.user.email],
-        )
+        # Prepare email content
+        subject = f"R&A shop: New Order Received - Order #{order.pk}"
+        context = {
+            'order_id': order.pk,
+            'customer_name': request.user.get_full_name(),
+            'customer_email': request.user.email,
+            'vendor_name': vendor.get_full_name(),
+            'items': data['items'],
+            'total_earnings': data['balance_change'],
+            'order_date': order.order_date.strftime("%Y-%m-%d %H:%M:%S"),
+        }
 
+        html_content = render_to_string('orders/emails.html', context)
+        text_content = strip_tags(html_content)
+
+        try:
+            # Create and send email
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=["mahmoudashawky197@gmail.com"],  # Send to vendor's email
+                reply_to=[settings.DEFAULT_FROM_EMAIL]
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=False)
+            
+        except Exception as e:
+            logger.error(f"Failed to send email to {data['email']}: {str(e)}")
+            # Consider adding a fallback notification here
+            
+            # email.attach_alternative(html_content, "text/html")
+            # email.send()
+
+    # Update customer balance and clear cart
     request.user.balance -= total_bill
     request.user.save()
-
     cart.cart_items.all().delete()
+
     messages.success(request, "Order placed successfully.")
     return redirect("customer-order-details", order.pk)
-
 
 @customer_check
 def customer_order_details(request, order_id):

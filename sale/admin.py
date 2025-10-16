@@ -1,11 +1,18 @@
 from django.contrib import admin
 from .models import Item, Review
 from import_export.admin import ExportActionMixin
+from .models import Category, Item
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("name", "created_at")
+
 
 
 class ItemAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = (
         "vendor",
+        "category",
         "item_title",
         "item_image",
         "item_price",

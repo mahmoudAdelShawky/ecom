@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>New Order Notification - Order #{{ order_id }}</h2>
+    <p>Dear {{ vendor_name }},</p>
+    <p>You've received a new order from {{ customer.user.get_full_name }} on R&A Market:</p>
+    
+    <h3>Order Details</h3>
+    <ul>
+        <li>Order ID: {{ order_id }}</li>
+        <li>Customer: {{ customer.user.get_full_name }}</li>
+        <li>Order Date: {{ order_date|date:"F j, Y H:i" }}</li>
+        <li>Total Earnings: EGP{{ total_earnings }}</li>
+    </ul>
+
+    <h3>Order Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.item.item_title }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>EGP{{ item.item.selling_price }}</td>
+                <td>EGP{{ item.item.selling_price|floatformat:2 }} x {{ item.quantity }} = EGP{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p>Please prepare the items for shipping within 24-48 hours.</p>
+    <p>Best rEGPards,<br>The R&A Team</p>
+</body>
+</html>

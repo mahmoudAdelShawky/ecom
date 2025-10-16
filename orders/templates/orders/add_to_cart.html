@@ -1,13 +1,57 @@
 {% extends 'Users/base.html' %}
 {% block content %}
-{% if item in cart_item %}
-  <h2>Modify Quantity </h2>
-{% else %}
-  <h2> Add to Cart</h2>
-{% endif %}
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Add to Cart</button>
-  </form>
+<div class="add-to-cart-container">
+    <div class="card">
+        <div class="card-body">
+            {% if item in cart_item %}
+                <h2 class="card-title">Modify Quantity</h2>
+            {% else %}
+                <h2 class="card-title">Add to Cart</h2>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary add-to-cart-button">Add to Cart</button>
+            </form>
+        </div>
+    </div>
+</div> 
+
+<style>
+.add-to-cart-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.add-to-cart-button {
+    background: var(--secondary-color);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    color: var(--white);
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.add-to-cart-button:hover {
+    background: var(--accent-color);
+    transform: translateY(-2px);
+}
+</style>
 {% endblock %}

@@ -1,6 +1,19 @@
 {% extends "Users/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
+<style>
+    form{
+        
+        padding: 10px;
+    }
+    form label{
+        padding: 10px 0;
+    }
+    from button{
+        width: 100%;
+        margin-top: 10px;
+    }
+</style>
 {% if user.is_authenticated %}
 <h4>You are already authenticated, please <a href ="{% url 'logout' %}">logout</a> before trying to login with another account.</h4>
 {% else %}
@@ -12,19 +25,26 @@
                 {{ form|crispy }}
             </fieldset>
             <div class="form-group">
-                <button class="btn btn-outline-info" type="submit">Login</button>
+                <button class="btn btn-primary mt-5 w-100" type="submit">Login</button>
             </div>
         </form>
         <div class="row mt-4">
             <div class="col-md-12">
-                <h3>Login with Google</h3>
-                <a href="{% url 'google-login' %}" class="btn btn-primary">Login with Google</a>
+                
+                <a href="{% url 'admin:index' %}" class="">Login as admin</a>
             </div>
         </div>
         <div class="border-top pt-3">
             <small class="text-muted">
-                Need An Account? <a class="ml-2" href="{% url 'role' %}">Sign Up Now</a>
+                Need An Account? 
             </small>
+            <!-- <a class="ml-2" href="{% url 'role' %}">Sign Up Now</a> -->
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'creg' %}" class=" ">Register as a Customer</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'vreg' %}" class=" ">Register as a Vendor</a>
         </div>
     </div>
 {% endif %}

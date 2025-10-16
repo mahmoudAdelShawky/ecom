@@ -1,12 +1,118 @@
 {% extends "Users/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-    <div class="container">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{form|crispy}}
-            <br />
-            <input class="btn btn-success" type="submit" value="Submit" />
-        </form>
+
+<div class="container py-3 py-md-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <!-- Form Card -->
+            <div class="card border-0 shadow-sm rounded-3">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white p-3 p-md-4">
+                    <h2 class="h5 mb-0 text-center">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if object %}Update{% else %}Create{% endif %}
+                    </h2>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-3 p-md-4">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Form Fields -->
+                        <div class="form-container">
+                            {{ form|crispy }}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex flex-column flex-md-row gap-2 justify-content-end mt-4">
+                            <a href="javascript:history.back()" 
+                               class="btn btn-outline-secondary rounded-2 py-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" 
+                                    class="btn btn-primary rounded-2 py-2">
+                                <i class="fas fa-check me-2"></i>Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<style>
+    /* Base Mobile Styles */
+    .card {
+        border-radius: 12px !important;
+    }
+    
+    label {
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    input, textarea, select {
+        border-radius: 8px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    .btn {
+        font-size: 0.95rem;
+        min-width: 120px;
+    }
+
+    /* Desktop Overrides */
+    @media (min-width: 768px) {
+        .card-header {
+            padding: 1.5rem !important;
+        }
+        
+        label {
+            font-size: 1rem;
+        }
+        
+        input, textarea, select {
+            padding: 1rem 1.25rem !important;
+        }
+        
+        .btn {
+            font-size: 1rem;
+        }
+    }
+
+    /* Focus States */
+    input:focus, textarea:focus, select:focus {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15) !important;
+    }
+
+    /* Mobile-Specific Adjustments */
+    @media (max-width: 575px) {
+        .container {
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+        
+        .card-header h2 {
+            font-size: 1.1rem;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+    }
+</style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 {% endblock content %}

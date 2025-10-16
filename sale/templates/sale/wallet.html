@@ -1,14 +1,130 @@
 {% extends 'Users/base.html' %}
 {% block content %}
-<div class="container">
-    <div class="card">
-        <div class="card-body">
-          <h2 class="card-title">Wallet</h2>
-          <p class="card-text"><strong>Current balance</strong> ${{ user.balance }}</p>
-          {% if user.user_type == 'CS' %}
-          <a class="btn btn-primary" href="{% url 'add-money'%}">Add Money</a>
-          {% endif %}
+
+<div class="container py-5">
+    <!-- Main Balance Card -->
+    <div class="card border-0 shadow-lg rounded-4 mb-4">
+        <div class="card-body p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="h3 mb-1">Wallet Balance</h2>
+                    <p class="text-muted mb-0">Available Funds</p>
+                </div>
+                <i class="fas fa-wallet fa-3x text-primary"></i>
+            </div>
+            
+            <div class="balance-display bg-primary bg-opacity-10 p-4 rounded-3 mb-4">
+                <p class="text-muted mb-1">Current Balance</p>
+                <h1 class="display-4 fw-bold text-primary">EGP{{ user.balance }}</h1>
+            </div>
+
+            {% if user.user_type == 'CS' %}
+            <div class="d-grid gap-3 d-md-flex justify-content-md-end">
+                <a href="{% url 'add-money' %}" class="btn btn-primary px-4 py-3 rounded-pill">
+                    <i class="fas fa-plus-circle me-2"></i>Add Money
+                </a>
+            </div>
+            {% endif %}
         </div>
-      </div>
+    </div>
+
+    <!-- Transaction History -->
+    <div class="row">
+        <!-- {% if user.user_type == 'CS' %}
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 mb-4">Recent Transactions</h3>
+                    <div class="list-group"> -->
+                        <!-- Sample Transaction - Replace with actual data -->
+                        <!-- <div class="list-group-item border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">Added Funds</h6>
+                                    <small class="text-muted">Today 14:32</small>
+                                </div>
+                                <span class="text-success">+ EGP50.00</span>
+                            </div>
+                        </div> -->
+                        <!-- Add more transactions dynamically -->
+                    <!-- </div>
+                </div>
+            </div>
+        </div>
+        {% endif %} -->
+
+        <!-- Vendor Earnings Summary -->
+        <!-- {% if user.user_type == 'VN' %}
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 mb-4">Earnings Overview</h3>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="p-3 bg-success bg-opacity-10 rounded-3">
+                                <h4 class="h6 text-success">Total Earnings</h4>
+                                <p class="h4 mb-0">EGP2,450.00</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-info bg-opacity-10 rounded-3">
+                                <h4 class="h6 text-info">Pending Payout</h4>
+                                <p class="h4 mb-0">EGP450.00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %} -->
+
+        <!-- Payment Methods -->
+        <!-- <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 mb-4">Payment Methods</h3>
+                    <div class="list-group">
+                        <div class="list-group-item border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fab fa-cc-visa fa-2x text-primary me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Visa ending in 4242</h6>
+                                    <small class="text-muted">Expires 08/2025</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> -->
+    </div>
 </div>
+
+<style>
+    .balance-display {
+        transition: transform 0.3s ease;
+    }
+    
+    .balance-display:hover {
+        transform: translateY(-3px);
+    }
+    
+    .list-group-item {
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+        border-left-color: var(--bs-primary);
+        background-color: rgba(var(--bs-primary-rgb), 0.05);
+    }
+    
+    .rounded-4 {
+        border-radius: 1rem !important;
+    }
+</style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 {% endblock %}

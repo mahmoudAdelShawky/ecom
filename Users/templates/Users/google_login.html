@@ -1,6 +1,62 @@
 {% extends 'Users/base.html' %}
 {% load socialaccount %}
 {% block content %}
-  <h2>Login with Google</h2>
-  <a href="{% provider_login_url 'google' %}">Login with Google</a>
+<div class="login-container">
+    <div class="login-card">
+        <div class="card-body">
+            <h2 class="card-title">Login with Google</h2>
+            <a href="{% provider_login_url 'google' %}" class="google-btn">
+                <img src="{% static 'users/google-icon.svg' %}" alt="Google">
+                Continue with Google
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.login-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.card-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #444;
+    transition: background 0.2s;
+    width: 100%;
+}
+
+.google-btn:hover {
+    background: #f8f9fa;
+}
+
+.google-btn img {
+    width: 20px;
+    height: 20px;
+}
+</style>
 {% endblock %}

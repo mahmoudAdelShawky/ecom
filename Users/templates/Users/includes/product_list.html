@@ -1,0 +1,55 @@
+{% for item in items %}
+<div class="col-12 mb-4">
+    <div class="card product-card h-100">
+        <div class="row g-0">
+            <div class="col-md-3">
+                <div class="product-image-container">
+                    <img src="{{ item.item_image.url }}" alt="{{ item.item_title }}" class="product-image">
+                    {% if item.item_discount %}
+                        <span class="discount-badge">
+                            <i class="fas fa-tag"></i> {{ item.item_discount }}% OFF
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card-body">
+                    <div class="product-title">
+                        <a href="{% url 'item-detail' item.pk %}" class="text-decoration-none">
+                            <h5 class="mb-1">{{ item.item_title }}</h5>
+                        </a>
+                    </div>
+                    <p class="card-text">{{ item.item_description|truncatechars:200 }}</p>
+                    <div class="price-section mb-2">
+                        {% if item.item_discount %}
+                            <span class="price-label">Deal Price:</span>
+                            <span class="final-price">EGP {{ item.selling_price }}</span>
+                            <span class="original-price">List Price: EGP {{ item.item_price }}</span>
+                            <span class="savings">You Save: EGP {{ item.discount_amount }}</span>
+                        {% else %}
+                            <span class="final-price">EGP {{ item.item_price }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'add-to-cart' item.pk %}" class="btn btn-warning add-to-cart">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </a>
+                        <a href="{% url 'add-to-wishlist' item.pk %}" class="btn btn-light wishlist">
+                            <i class="far fa-heart"></i> Add to List
+                        </a>
+                        <a href="{% url 'item-detail' item.pk %}" class="btn btn-light details">
+                            <i class="fas fa-info-circle"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="col-12">
+    <div class="alert alert-info">
+        No products found for "{{ query }}"
+    </div>
+</div>
+{% endfor %}

@@ -1,50 +1,153 @@
 {% extends 'Users/base.html' %}
+{% load static %}
 
 {% block content %}
-  <div class="container">
+<div class="container py-4">
     <div class="row">
-      <div class="col-md-8 offset-md-2">
-        <h1>Order Details</h1>
-
-        <div class="card">
-          <div class="card-body">
-            <h6 class="card-subtitle mb-2 text-muted text-lg-right">Order ID: {{ order.pk }}</h6>
-            <h5 class="card-subtitle mb-2 text-muted text-lg-right">{{ order.order_date }}</h5>
-
-            <div class="mt-4">
-              <h3 class="mb-4">Items Ordered</h3>
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th>Item</th>
-                    <th>Price</th>
-                    <th>Quantity</th>
-                    <th>Total Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for order_item in order_items %}
-                    <tr>
-                      <td>{{ order_item.item_title }}</td>
-                      <td>${{ order_item.item_price }}</td>
-                      <td>{{ order_item.quantity }}</td>
-                      <td>${{ order_item.total_iprice }}</td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+        <div class="col-12 col-lg-10 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">Order Details</h1>
+                <a href="{% url 'customer-order-history' %}" class="btn btn-link text-decoration-none">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Orders
+                </a>
             </div>
 
-            <div class="mt-4">
-              <h3>Total Bill: ${{ order.total_bill }}</h3>
-              {% if order.saving %}
-              <h5>You saved  ${{ order.saving }} with EurekaMart, Yay! </h5><br><br>
-              {% endif %}              
-              <h7 class="card-subtitle mb-2 text-muted "> Order delivered at- {{ order.customer.user.address }}</h7>
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-primary text-white py-3 rounded-top">
+                    <div class="row">
+                        <div class="col-12 col-md-6">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-receipt me-2"></i>
+                                <div>
+                                    <h5 class="mb-0">Order #{{ order.pk }}</h5>
+                                    <small class="opacity-75">{{ order.order_date|date:"F j, Y H:i" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 mt-3 mt-md-0">
+                            <div class="d-flex align-items-center h-100">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                <div>
+                                    <small class="opacity-75">Delivery Address</small>
+                                    <div class="fw-medium">{{ order.customer.user.address }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 mt-3 mt-md-0">
+                            <div class="d-flex align-items-center h-100">
+                                <i class="fas fa-map-note-alt me-2"></i>
+                                <div>
+                                    <small class="opacity-75">Delivery Address</small>
+                                    <div class="fw-medium">it will sent to you about 24h in the addreses you add in profile</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="p-4">
+                        <h4 class="mb-4"><i class="fas fa-box-open me-2"></i>Items Ordered</h4>
+                        
+                        <!-- Desktop Table -->
+                        <div class="d-none d-md-block">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Item</th>
+                                            <th>Price</th>
+                                            <th>Quantity</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order_item in order_items %}
+                                        <tr>
+                                            <td class="fw-medium">{{ order_item.item_title }}</td>
+                                            <td>EGP{{ order_item.item_price }}</td>
+                                            <td>{{ order_item.quantity }}</td>
+                                            <td class="text-end fw-bold">EGP{{ order_item.total_iprice }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Mobile List -->
+                        <div class="d-md-none">
+                            <div class="list-group">
+                                {% for order_item in order_items %}
+                                <div class="list-group-item border-0 py-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div class="fw-medium">{{ order_item.item_title }}</div>
+                                        <div>EGP{{ order_item.total_iprice }}</div>
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        {{ order_item.quantity }} x EGP{{ order_item.item_price }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-light p-4 border-top">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {% if order.saving %}
+                                <div class="alert alert-success rounded-3 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-tag me-2"></i>
+                                        <div>
+                                            You saved EGP{{ order.saving }} with R&A shop! 🎉
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 shadow-sm">
+                                    <h5 class="mb-0">Total Amount:</h5>
+                                    <h3 class="mb-0 text-success">EGP{{ order.total_bill }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
+</div>
+
+<style>
+    .card-header {
+        transition: background-color 0.2s ease;
+    }
+    
+    .list-group-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .list-group-item:hover {
+        border-left-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.03);
+    }
+    
+    @media (max-width: 768px) {
+        .card-header .row > div {
+            padding: 0.5rem 0;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        h4 {
+            font-size: 1.25rem;
+        }
+    }
+</style>
 {% endblock %}

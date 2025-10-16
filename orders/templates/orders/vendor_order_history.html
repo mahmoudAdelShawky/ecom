@@ -1,33 +1,137 @@
 {% extends 'Users/base.html' %}
+{% load static %}
 
 {% block content %}
-  <h1>Order History</h1>
+<div class="container py-5">
+    <div class="dashboard-header mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h2 mb-0">Order History</h1>
+            <div class="total-earnings badge bg-primary bg-opacity-10 text-primary p-3">
+                <span class="h5 mb-0">Total Earned: EGP{{ user.balance|default:"0.00" }}</span>
+            </div>
+        </div>
+    </div>
 
-  {% if order_data %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Order Date</th>
-          <th>Customer</th>
-          <th>Total Earned</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
+    {% if order_data %}
+    <div class="order-list">
         {% for data in order_data %}
-          <tr>
-            <td>{{ data.order.pk }}</td>
-            <td>{{ data.order.order_date }}</td>
-            <td>{{ data.order.customer.user.username }}</td>
-            <td>${{ data.total_earned }}</td>
-            <td><a href="{% url 'vendor-order-details' data.order.pk %}">View Details</a></td>
-          </tr>
+        <div class="card order-card mb-4 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    <!-- Left Column -->
+                    <div class="col-md-8">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h3 class="h5 mb-1">Order #{{ data.order.pk }}</h3>
+                                <p class="text-muted mb-0">{{ data.order.order_date|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <span class="badge bg-success bg-opacity-10 text-success">Completed</span>
+                        </div>
+                        
+                        <div class="customer-info mb-3">
+                            <p class="mb-1">
+                                <i class="fas fa-user me-2"></i>
+                                {{ data.order.customer.user.username }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-md-4">
+                        <div class="order-meta">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Total Earned:</span>
+                                <span class="fw-bold text-primary">EGP{{ data.total_earned }}</span>
+                            </div>
+                            <div class="text-end">
+                                <a href="{% url 'vendor-order-details' data.order.pk %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    View Details <i class="fas fa-arrow-right ms-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <p>No orders found.</p>
-  {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    <!-- <nav aria-label="Order navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav> -->
+    {% else %}
+    <div class="empty-state text-center py-5">
+        <div class="empty-state-icon mb-4">
+            <i class="fas fa-box-open fa-3x text-muted"></i>
+        </div>
+        <h3 class="h4 mb-3">No Orders Found</h3>
+        <p class="text-muted">You haven't received any orders yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .order-card {
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    .customer-info {
+        background: rgba(0,0,0,0.03);
+        padding: 12px;
+        border-radius: 8px;
+    }
+
+    .total-earnings {
+        border-radius: 8px;
+        border: 1px solid rgba(13, 110, 253, 0.15);
+    }
+
+    @media (max-width: 768px) {
+        .order-card .row {
+            flex-direction: column;
+        }
+        
+        .order-card .col-md-4 {
+            margin-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.08);
+            padding-top: 1rem;
+        }
+        
+        .dashboard-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .total-earnings {
+            margin-top: 1rem;
+        }
+    }
+</style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
 {% endblock %}

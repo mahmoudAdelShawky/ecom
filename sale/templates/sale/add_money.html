@@ -1,11 +1,94 @@
 {% extends "Users/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-    <div class="container">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <button class="btn btn-success" type="submit">Submit</button>
-        </form>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Form Card -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Card Header -->
+                <div class="card-header bg-gradient-primary text-white py-4">
+                    <h2 class="h3 mb-0 text-center">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if object %}Update{% else %}Create New{% endif %} Entry
+                    </h2>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Form Fields -->
+                        <div class="form-container">
+                            {{ form|crispy }}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-4">
+                            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill">
+                                <i class="fas fa-check-circle me-2"></i>Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1);
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    }
+    
+    .form-group {
+        margin-bottom: 1.75rem;
+    }
+    
+    label {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.75rem;
+    }
+    
+    input, textarea, select {
+        border-radius: 0.5rem!important;
+        border: 2px solid #e5e7eb!important;
+        padding: 0.875rem 1.25rem!important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        border-color: #3b82f6!important;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15)!important;
+    }
+    
+    .invalid-feedback {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+    
+    .rounded-4 {
+        border-radius: 1.25rem!important;
+    }
+</style>
+
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 {% endblock content %}

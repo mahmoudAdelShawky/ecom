@@ -1,45 +1,823 @@
-{% extends 'Users/base.html' %}
+{% extends "Users/base.html" %}
+{% load static %}
 
 {% block content %}
-  <h1>Your Cart</h1>
+{# Link to Google Fonts for a modern look (already in base.html) #}
+{# <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> #}
 
-  {% if cart.cart_items.all %}
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Quantity</th>
-          <th>Price</th>
-          <th>Total</th>
-          <th>Modify</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for cart_item in cart_items %}
-          <tr>
-            {% if cart_item.stock %}
-                <td>{{ cart_item.item.item_title }}</td>
-            {% else %}
-                <td>{{ cart_item.item.item_title }}*</td>
-            {% endif %}
-            <td>{{ cart_item.quantity }}</td>
-            <td>${{ cart_item.item.selling_price }}</td>
-            <td>${{ cart_item.total_iprice }}</td>
-            <td><a class="btn btn-primary btn-sm" href="{% url 'add-to-cart' cart_item.item.pk %}">Modify</a></td>
-            <td><a href="{% url 'removed-item' cart_item.pk %}">x</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <h6 class="card-subtitle mb-2 text-muted text-lg-right">* indicates that the stock is lesser than the quantity!</h6>
-    <h3>Total: ${{ cart.calculate_bill }}</h3>
-    {% if cart.savings %}
-    <h5>You will save ${{ cart.savings }} on this order! </h5>
+<div class="cart-container">
+    <h1>Your Shopping Cart</h1>
+
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                    
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
-    <a href="{% url 'create-order' %}" class="btn btn-success">Proceed to Checkout</a>
 
-  {% else %}
-    <p>Your cart is empty.</p>
-  {% endif %}
+    {% if cart_items %}
+        <div class="cart-items-list">
+            {% for cart_item in cart_items %}
+            <div class="cart-item-card">
+                {% if cart_item.item.item_image %}
+                    <div class="item-image-wrapper">
+                        <img src="{{ cart_item.item.item_image.url }}" alt="{{ cart_item.item.item_title }}" class="item-image">
+                    </div>
+                {% endif %}
+                <div class="item-details">
+                    <h3 class="item-title">{{ cart_item.item.item_title }}</h3>
+                    <p class="item-price">Price: EGP{{ cart_item.item.selling_price|floatformat:2 }}</p>
+                </div>
+                <div class="item-quantity-controls">
+                    <form action="{% url 'update-cart-quantity' cart_item.pk 'decrease' %}" method="post" class="quantity-form">
+                        {% csrf_token %}
+                        <button type="submit" class="quantity-btn decrease" {% if cart_item.quantity == 1 %}disabled{% endif %}>-</button>
+                    </form>
+                    <span class="item-quantity">{{ cart_item.quantity }}</span>
+                    <form action="{% url 'update-cart-quantity' cart_item.pk 'increase' %}" method="post" class="quantity-form">
+                        {% csrf_token %}
+                        <button type="submit" class="quantity-btn increase" {% if not cart_item.stock_available %}disabled{% endif %}>+</button>
+                    </form>
+                    {% if not cart_item.stock_available %}
+                        <p class="stock-warning">Out of stock!</p>
+                    {% endif %}
+                </div>
+                <div class="item-total">
+                    Total: <span class="total-amount">EGP{{ cart_item.total_iprice|floatformat:2 }}</span>
+                </div>
+                <div class="item-actions">
+                    <form action="{% url 'remove-from-cart' cart_item.pk %}" method="post" class="remove-form">
+                        {% csrf_token %}
+                        <button type="submit" class="remove-btn" title="Remove Item">
+                            <i class="fas fa-trash-alt"></i> {# Font Awesome icon for trash #}
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
 
+        <div class="cart-summary">
+            <div class="summary-savings">
+                <strong>You Save:</strong> <span class="savings-amount">EGP{{ cart.savings|floatformat:2 }}</span>
+            </div>
+            <div class="summary-total">
+                <strong>Cart Total:</strong> <span class="final-total-amount">EGP{{ cart.calculate_bill|floatformat:2 }}</span>
+            </div>
+            <div class="cart-action-buttons">
+                <a href="{% url 'front' %}" class="continue-shopping-btn">Continue Shopping</a>
+                <a href="{% url 'create_order' %}" class="checkout-btn">Proceed to Checkout</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-cart-message">
+            <p>Your cart is empty.</p>
+            <p>Looks like you haven't added anything to your cart yet. Start exploring our amazing products!</p>
+            <a href="{% url 'front' %}" class="continue-shopping-btn">Start Shopping Now</a>
+        </div>
+    {% endif %}
+</div>
+<style>
+    /* static/css/cart.css */
+
+/* static/css/cart.css */
+
+/* --- Base Styles --- */
+body {
+    font-family: 'Poppins', Arial, sans-serif; /* Amazon uses 'Amazon Ember', we'll use Poppins as a modern alternative */
+    line-height: 1.5;
+    color: #111; /* Darker text like Amazon */
+    background-color: #eaeded; /* Light gray background, similar to Amazon's page background */
+    margin: 0;
+    padding: 20px;
+}
+
+/* --- Global Links & Buttons Reset for Amazon feel --- */
+a {
+    color: #007185; /* Amazon's link blue */
+    text-decoration: none;
+}
+a:hover {
+    color: #c7511f; /* Amazon's hover orange/red */
+    text-decoration: underline;
+}
+
+/* --- Cart Container Layout --- */
+.cart-container {
+    max-width: 1200px; /* Wider for more content */
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px; /* Slightly rounded corners */
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08); /* Subtle shadow */
+
+    display: flex; /* Use flexbox for the main cart layout */
+    gap: 20px; /* Space between item list and summary */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.cart-container h1 {
+    width: 100%; /* Make heading take full width */
+    text-align: left; /* Align heading to left */
+    color: #0f1111; /* Amazon's primary text color */
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 500; /* Less bold than before */
+    border-bottom: 1px solid #ddd; /* Subtle separator */
+    padding-bottom: 15px;
+}
+
+/* --- Messages (Django messages framework) --- */
+.messages-container {
+    width: 100%; /* Take full width */
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-weight: 400;
+    font-size: 0.95em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.message.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* --- Cart Items List (left column on desktop) --- */
+.cart-items-list {
+    flex: 1; /* Takes available space */
+    min-width: 60%; /* Ensure it doesn't get too small */
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Space between individual item cards */
+}
+
+/* --- Individual Cart Item Card --- */
+.cart-item-card {
+    display: flex;
+    align-items: flex-start; /* Align items to the top */
+    padding: 15px;
+    background-color: #fff;
+    border: 1px solid #ccc; /* Lighter border */
+    border-radius: 8px;
+    box-shadow: none; /* No individual card shadow, rely on container */
+    transition: background-color 0.1s ease;
+    position: static; /* Explicitly static, though it's default */
+}
+
+.cart-item-card:hover {
+    background-color: #fcfcfc; /* Slight background change on hover */
+}
+
+/* --- Item Image --- */
+.item-image-wrapper {
+    width: 120px; /* Larger image */
+    height: 120px;
+    overflow: hidden;
+    border-radius: 4px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    border: 1px solid #eee; /* Subtle image border */
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 'contain' fits the image, 'cover' crops */
+    display: block;
+}
+
+/* --- Item Details (Title and Price) --- */
+.item-details {
+    flex-grow: 1;
+    margin-right: 15px;
+}
+
+.item-title {
+    font-size: 1.15em;
+    font-weight: 600;
+    color: #0f1111;
+    margin-bottom: 5px;
+}
+
+.item-price {
+    color: #565959; /* Muted gray price */
+    font-size: 0.9em;
+    margin-bottom: 10px;
+}
+
+/* --- Quantity Controls --- */
+.item-quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.quantity-form {
+    display: inline-block;
+}
+
+.quantity-btn {
+    width: 30px; /* Smaller buttons */
+    height: 30px;
+    background-color: #f0f2f5; /* Light gray button background */
+    color: #0f1111;
+    border: 1px solid #d5d9d9;
+    border-radius: 3px;
+    font-size: 1.1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.1s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(15,17,17,.15); /* Subtle shadow */
+}
+
+.quantity-btn:hover:not(:disabled) {
+    background-color: #e5e5e5;
+    border-color: #adb1b8 #a2a6ac #8d9096;
+    box-shadow: 0 2px 4px rgba(15,17,17,.15);
+}
+
+.quantity-btn:disabled {
+    background-color: #ddd;
+    cursor: not-allowed;
+    opacity: 0.7;
+    box-shadow: none;
+}
+
+.item-quantity {
+    font-size: 1em;
+    font-weight: 500;
+    min-width: 25px;
+    text-align: center;
+    border: 1px solid #d5d9d9; /* Border around quantity like Amazon */
+    padding: 5px 8px;
+    border-radius: 3px;
+    background-color: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.stock-warning {
+    color: #b12704; /* Amazon's alert red */
+    font-size: 0.85em;
+    margin-left: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* --- Item Total (Price for a specific item x quantity) --- */
+.item-total {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #b12704; /* Amazon's price red */
+    min-width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.total-amount {
+    font-size: 1em;
+}
+
+/* --- Item Actions (Remove Button/Link) --- */
+.item-actions {
+    flex-shrink: 0;
+    margin-left: 15px; /* Space from total */
+    padding-top: 5px; /* Align with top of controls */
+}
+
+.remove-btn {
+    background: none; /* No background */
+    border: none;
+    color: #007185; /* Blue link color */
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.remove-btn:hover {
+    color: #c7511f; /* Hover orange/red */
+    text-decoration: underline;
+}
+.remove-btn i {
+    font-size: 1em;
+    vertical-align: middle;
+}
+
+/* --- Cart Summary (right column on desktop) --- */
+.cart-summary {
+    flex: 0 0 300px; /* Fixed width for summary on desktop */
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08); /* Same shadow as container */
+    margin-left: 20px; /* Space from item list */
+    position: sticky; /* Sticky positioning for summary */
+    top: 20px; /* Stick to top with some offset */
+    align-self: flex-start; /* Keep it at the top of the flex container */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center buttons horizontally */
+}
+
+.summary-savings,
+.summary-total {
+    width: 100%;
+    text-align: right;
+    font-size: 1.1em;
+    font-weight: 500;
+    color: #0f1111;
+    margin-bottom: 15px;
+}
+
+.summary-total {
+    font-size: 1.4em;
+    font-weight: 700;
+    border-top: 1px solid #ddd; /* Separator */
+    padding-top: 15px;
+    margin-top: 10px;
+}
+
+.savings-amount,
+.final-total-amount {
+    color: #b12704; /* Red for price and savings */
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+.cart-action-buttons {
+    width: 100%;
+    display: flex;
+    flex-direction: column; /* Stack buttons vertically */
+    gap: 15px; /* Space between buttons */
+    margin-top: 20px;
+}
+
+.continue-shopping-btn,
+.checkout-btn {
+    display: block; /* Make them block-level to take full width */
+    width: 100%; /* Full width */
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1em;
+    text-align: center;
+    border: 1px solid;
+    transition: all 0.1s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.continue-shopping-btn {
+    background-color: #e3e6e6;
+    border-color: #adb1b8 #a2a6ac #8d9096;
+    color: #0f1111;
+}
+
+.continue-shopping-btn:hover {
+    background-color: #d5d9d9;
+}
+
+.checkout-btn {
+    background-color: #FFD814; /* Amazon's signature yellow button */
+    border-color: #FCD200;
+    color: #0F1111;
+}
+
+.checkout-btn:hover {
+    background-color: #F7CA00; /* Darker yellow on hover */
+}
+
+
+/* --- Empty Cart Message --- */
+.empty-cart-message {
+    width: 100%; /* Takes full width of the container */
+    text-align: center;
+    padding: 50px 30px;
+    background-color: #fcfcfc;
+    border-radius: 12px;
+    border: 1px dashed #d0d0d0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-top: 20px; /* Space from heading/messages */
+}
+
+.empty-cart-message p {
+    font-size: 1.4em;
+    color: #565959;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.empty-cart-message p:last-of-type {
+    font-size: 1em;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+.empty-cart-message .continue-shopping-btn {
+    display: inline-block; /* Adjust for single button in empty state */
+    width: auto; /* Auto width */
+    padding: 12px 25px;
+    font-size: 1.1em;
+    background-color: #FFD814; /* Amazon's yellow */
+    color: #0F1111;
+    border-color: #FCD200;
+}
+.empty-cart-message .continue-shopping-btn:hover {
+    background-color: #F7CA00;
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 992px) {
+    .cart-container {
+        flex-direction: column; /* Stack columns on tablets/small desktops */
+        padding: 20px;
+    }
+
+    .cart-items-list {
+        min-width: 100%; /* Take full width */
+        margin-bottom: 30px;
+    }
+
+    .cart-summary {
+        position: static; /* Remove sticky on smaller screens */
+        margin-left: 0;
+        width: 100%; /* Take full width */
+        padding: 25px;
+    }
+
+    .cart-summary .summary-savings,
+    .cart-summary .summary-total {
+        text-align: center; /* Center summary text */
+    }
+
+    .cart-action-buttons {
+        align-items: center; /* Center buttons if they're not full width */
+    }
+}
+
+@media (max-width: 768px) {
+    .cart-item-card {
+        flex-direction: column; /* Stack elements within item card */
+        align-items: center; /* Center items when stacked */
+        text-align: center;
+        padding: 15px;
+        gap: 10px; /* Reduce gap */
+    }
+
+    .item-image-wrapper {
+        margin-right: 0;
+        margin-bottom: 15px; /* Add space below image */
+        width: 100px;
+        height: 100px;
+    }
+
+    .item-details,
+    .item-quantity-controls,
+    .item-total,
+    .item-actions {
+        width: 100%; /* Full width for internal sections */
+        margin-right: 0;
+        justify-content: center; /* Center content horizontally */
+        text-align: center;
+    }
+
+    .item-price, .stock-warning {
+        font-size: 0.9em;
+    }
+
+    .item-total {
+        font-size: 1.2em;
+        text-align: center; /* Center total price */
+        margin-bottom: 10px; /* Space before actions */
+    }
+
+    .item-actions {
+        margin-left: 0; /* Remove left margin */
+    }
+
+    .remove-btn {
+        font-size: 0.85em; /* Smaller remove button text */
+    }
+}
+
+@media (max-width: 480px) {
+    .cart-container {
+        margin: 60px auto; /* More margin on top for smaller screens */
+        padding: 15px;
+    }
+
+    .cart-container h1 {
+        font-size: 1.8em;
+    }
+
+    .item-title {
+        font-size: 1em;
+    }
+
+    .quantity-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 1em;
+    }
+    .item-quantity {
+        padding: 3px 6px;
+        font-size: 0.9em;
+    }
+
+    .summary-savings,
+    .summary-total {
+        font-size: 1.2em;
+    }
+
+    .continue-shopping-btn,
+    .checkout-btn {
+        font-size: 0.9em;
+        padding: 10px 15px;
+    }
+}
+/* --- Responsive Design (Adjustments for smaller screens) --- */
+
+/* Tablet/Small Desktop screens */
+@media (max-width: 992px) {
+    .cart-container {
+        margin: 60px auto; /* More margin on top for smaller screens */
+        flex-direction: column; /* Stack columns (item list on top, summary below) */
+        padding: 20px; /* Adjust container padding for smaller screens */
+    }
+
+    .cart-items-list {
+        min-width: 100%; /* Item list takes full width when stacked */
+        margin-bottom: 30px; /* Space between stacked list and summary */
+    }
+
+    .cart-summary {
+        position: static; /* Remove sticky behavior when columns are stacked */
+        margin-left: 0; /* Remove left margin */
+        width: 100%; /* Summary takes full width */
+        padding: 25px; /* Adjust summary padding */
+    }
+
+    .cart-summary .summary-savings,
+    .cart-summary .summary-total {
+        text-align: center; /* Center summary text for better appearance on stacked layout */
+    }
+
+    .cart-action-buttons {
+        align-items: center; /* Center buttons horizontally if they are not full width */
+    }
+}
+
+/* Mobile devices (larger phones, portrait tablets) */
+@media (max-width: 768px) {
+    .cart-item-card {
+        flex-direction: column; /* Stack elements *within* each item card (image on top, then details, etc.) */
+        align-items: center; /* Center items when stacked vertically within the card */
+        text-align: center; /* Center text within the card elements */
+        padding: 15px; /* Adjust card padding */
+        gap: 10px; /* Reduce gap between stacked elements */
+    }
+
+    .item-image-wrapper {
+        margin-right: 0; /* Remove right margin from image */
+        margin-bottom: 15px; /* Add bottom margin to image when stacked */
+        width: 100px; /* Adjust image size for mobile */
+        height: 100px;
+    }
+
+    .item-details,
+    .item-quantity-controls,
+    .item-total,
+    .item-actions {
+        width: 100%; /* Make each section within the card take full width */
+        margin-right: 0; /* Remove right margins */
+        justify-content: center; /* Center their content horizontally */
+        text-align: center; /* Center text */
+    }
+
+    .item-price, .stock-warning {
+        font-size: 0.9em; /* Smaller font for price and warnings */
+    }
+
+    .item-total {
+        font-size: 1.2em; /* Adjust total font size */
+        text-align: center; /* Center total price */
+        margin-bottom: 10px; /* Space before actions */
+    }
+
+    .item-actions {
+        margin-left: 0; /* Remove left margin */
+    }
+
+    .remove-btn {
+        font-size: 0.85em; /* Smaller remove button text */
+    }
+}
+
+/* Smaller Mobile devices (portrait phones) */
+@media (max-width: 480px) {
+    .cart-container {
+        padding: 15px; /* Further reduce main container padding */
+    }
+
+    .cart-container h1 {
+        font-size: 1.8em; /* Smaller heading */
+    }
+
+    .item-title {
+        font-size: 1em; /* Smaller item title */
+    }
+
+    .quantity-btn {
+        width: 28px; /* Smaller quantity buttons */
+        height: 28px;
+        font-size: 1em;
+    }
+    .item-quantity {
+        padding: 3px 6px; /* Adjust padding for quantity display */
+        font-size: 0.9em; /* Smaller quantity text */
+    }
+
+    .summary-savings,
+    .summary-total {
+        font-size: 1.2em; /* Smaller summary totals */
+    }
+
+    .continue-shopping-btn,
+    .checkout-btn {
+        font-size: 0.9em; /* Smaller action buttons */
+        padding: 10px 15px; /* Adjust padding for action buttons */
+    }
+}
+/* --- Item Image --- */
+.item-image-wrapper {
+    /* Updated for responsiveness */
+    width: 80px; /* Default width, smaller for a more compact design */
+    height: 80px; /* Default height */
+    max-width: 100%; /* Ensures it doesn't exceed its parent's width */
+    overflow: hidden;
+    border-radius: 4px;
+    margin-right: 20px;
+    flex-shrink: 0;
+    border: 1px solid #eee;
+}
+
+.item-image {
+    width: 100%;
+    height: 100%; /* Important: use 100% to fill the wrapper */
+    object-fit: contain; /* Ensures image fits within the wrapper */
+    display: block;
+    /* Add this for smooth scaling transition if any */
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* Smaller Mobile devices (portrait phones) */
+@media (max-width: 480px) {
+    /* --- IMPORTANT CHANGE: Reduce body padding for full screen width content --- */
+    body {
+        padding: 0; /* Remove padding from body */
+    }
+
+    .cart-container {
+        padding: 10px; /* Reduce container padding to make it almost full width */
+        margin: 60px auto; /* Ensure no horizontal margin from container itself */
+        border-radius: 0; /* Optional: Remove border-radius for edge-to-edge look */
+        box-shadow: none; /* Optional: Remove shadow for flatter edge-to-edge look */
+    }
+
+    .cart-container h1 {
+        font-size: 1.8em;
+    }
+
+    .item-image-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .item-title {
+        font-size: 1em;
+    }
+
+    .quantity-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 1em;
+    }
+    .item-quantity {
+        padding: 3px 6px;
+        font-size: 0.9em;
+    }
+
+    .summary-savings,
+    .summary-total {
+        font-size: 1.2em;
+    }
+
+    .continue-shopping-btn,
+    .checkout-btn {
+        font-size: 0.9em;
+        padding: 10px 15px;
+    }
+
+    /* --- IMPORTANT CHANGE: Adjust cart item card padding --- */
+    .cart-item-card {
+        padding: 10px; /* Reduce individual card padding to make it wider */
+        border-radius: 0; /* Optional: Remove border-radius to align with screen edges */
+    }
+
+    /* Ensure messages also stretch if they have padding/margin */
+    .message {
+        border-radius: 0;
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+/* Mobile devices (larger phones, portrait tablets) */
+@media (max-width: 768px) {
+    .cart-item-card {
+        flex-direction: column; /* Stacks elements within each item card */
+        align-items: center; /* Centers items when stacked vertically */
+        text-align: center;
+        padding: 15px;
+        gap: 10px;
+    }
+
+    .item-image-wrapper {
+        margin-right: 0;
+        margin-bottom: 15px; /* Add space below the image when stacked */
+        /* --- IMPORTANT CHANGES FOR FULL WIDTH IMAGE --- */
+        width: 100%; /* Make the image wrapper take full width of the card */
+        height: auto; /* Allow height to adjust proportionally */
+        max-height: 200px; /* Optional: Limit max height on smaller screens to prevent huge images */
+        box-shadow: none; /* Remove shadow here if desired for a flatter look on mobile */
+    }
+
+    .item-image {
+        /* Ensure the image itself scales correctly within its new full-width wrapper */
+        width: 100%;
+        height: 100%; /* Will now follow height: auto of wrapper */
+        object-fit: contain; /* Ensures the whole image is visible, no cropping */
+    }
+
+    .item-details,
+    .item-quantity-controls,
+    .item-total,
+    .item-actions {
+        width: 100%; /* Ensure these sections also take full width */
+        margin-right: 0;
+        justify-content: center; /* Center their content horizontally */
+        text-align: center;
+    }
+
+    .item-price, .stock-warning {
+        font-size: 0.9em;
+    }
+
+    .item-total {
+        font-size: 1.2em;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .item-actions {
+        margin-left: 0;
+    }
+
+    .remove-btn {
+        font-size: 0.85em;
+    }
+}
+</style>
 {% endblock %}

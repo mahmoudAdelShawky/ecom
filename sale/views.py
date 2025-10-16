@@ -13,8 +13,28 @@ from decimal import Decimal, InvalidOperation
 from django.db.models import F, Q, Avg, ExpressionWrapper, DecimalField
 import csv
 from django.http import HttpResponse
+from django.core.cache import cache
+import logging
+
+from django.http import JsonResponse
+from django.http import JsonResponse
+from django.utils.html import escape
 
 
+
+def ajax_search_suggestions(request):
+    query = request.GET.get('search', '').strip()
+    suggestions = []
+    if query:
+        items = Item.objects.filter(item_title__icontains=query)[:8]
+        for i in items:
+            # Highlight the search term in the title
+            title = escape(i.item_title)
+            q = escape(query)
+            highlighted = title.replace(q, f'<mark>{q}</mark>')
+            suggestions.append({'title': i.item_title, 'highlighted': highlighted, 'id': i.pk})
+    return JsonResponse({'suggestions': suggestions})
+logger = logging.getLogger(__name__)
 class VendorCheckMixin(UserPassesTestMixin):
     def test_func(self):
         item = self.get_object()
@@ -38,6 +58,7 @@ def dashboard(request):
     low_stock_items = Item.objects.filter(vendor=request.user.id, item_stock__lt=4)
     context = {"low_stock_items": low_stock_items}
     return render(request, "Users/dashboard.html", context=context)
+    # return render(request, "Users/home.html", context=context)
 
 
 @vendor_check
@@ -46,32 +67,55 @@ def vendor_items(request):
     context = {"items": items}
     return render(request, "sale/vendor_items.html", context=context)
 
+from django.shortcuts import render
+from django.db.models import Q, F, Avg, ExpressionWrapper, DecimalField
+from django.core.cache import cache
+from .models import Item
 
 @customer_check
 def home(request):
     sort_by = request.GET.get("sort_by")
-    items = Item.objects.all()
+    search_input = request.GET.get('search', '').strip()
+    
+    cache_key = f'items_list_{sort_by}'
+    items = cache.get(cache_key)
 
-    if sort_by == "orders":
-        items = items.order_by("-item_orders")
-    elif sort_by == "price_low_high":
-        items = items.annotate(
-            calculated_selling_price=ExpressionWrapper(
-                F("item_price") - ((F("item_price") * F("item_discount")) / 100),
-                output_field=DecimalField(),
-            )
-        ).order_by("calculated_selling_price")
-    elif sort_by == "price_high_low":
-        items = items.annotate(
-            calculated_selling_price=ExpressionWrapper(
-                F("item_price") - ((F("item_price") * F("item_discount")) / 100),
-                output_field=DecimalField(),
-            )
-        ).order_by("-calculated_selling_price")
-    elif sort_by == "average_rating":
-        items = items.annotate(avg_rating=Avg("item_reviews__rating")).order_by(
-            "-avg_rating"
+    if items is None:
+        items = Item.objects.all()
+
+        if sort_by == "orders":
+            items = items.order_by("-item_orders")
+        elif sort_by == "price_low_high":
+            items = items.annotate(
+                calculated_selling_price=ExpressionWrapper(
+                    F("item_price") - ((F("item_price") * F("item_discount")) / 100),
+                    output_field=DecimalField(),
+                )
+            ).order_by("calculated_selling_price")
+        elif sort_by == "price_high_low":
+            items = items.annotate(
+                calculated_selling_price=ExpressionWrapper(
+                    F("item_price") - ((F("item_price") * F("item_discount")) / 100),
+                    output_field=DecimalField(),
+                )
+            ).order_by("-calculated_selling_price")
+        elif sort_by == "average_rating":
+            items = items.annotate(avg_rating=Avg("item_reviews__rating")).order_by("-avg_rating")
+        
+        # تخزين النتائج في الكاش
+        cache.set(cache_key, items, timeout=0)
+
+    # تنفيذ البحث بعد جلب البيانات من الكاش أو قاعدة البيانات
+    if search_input:
+        items = items.filter(
+            Q(item_title__icontains=search_input) |
+            Q(item_description__icontains=search_input) |
+            Q(category__name__icontains=search_input)
         )
+    # Ensure only existing items are retrieved
+    # cache_items = cache.get(cache_key)
+    # existing_item_ids = set(Item.objects.values_list("id", flat=True))
+    # items = Item.objects.filter(id__in=[item["id"] for item in cache_items if item["id"] in existing_item_ids])
 
     context = {"items": items}
     return render(request, "Users/home.html", context=context)
@@ -97,6 +141,7 @@ class AddItem(CreateView):
     model = Item
     fields = [
         "item_title",
+        "category",
         "item_price",
         "item_description",
         "item_image",
@@ -118,6 +163,7 @@ class EditItem(VendorCheckMixin, UpdateView):
     model = Item
     fields = [
         "item_title",
+        "category",
         "item_price",
         "item_description",
         "item_image",
@@ -200,6 +246,7 @@ def leave_review(request, item_id):
         messages.warning(request, "You have already reviewed this item.")
         return redirect("item-detail", item_id=item.id)
 
+
     if request.method == "POST":
         form = ReviewForm(request.POST)
         if form.is_valid():
@@ -221,17 +268,19 @@ def leave_review(request, item_id):
 
 @login_required
 def sales_report(request):
+    
     vendor_items = Item.objects.filter(vendor=request.user.vendor)
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="sales_report.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(["Item Title", "Price", "Quantity Sold", "Total Sales"])
+    writer.writerow(["Item Title","Category", "Price", "Quantity Sold", "Total Sales"])
 
     for item in vendor_items:
         writer.writerow(
             [
                 item.item_title,
+                item.category,
                 item.item_price,
                 item.item_orders,
                 item.item_price * item.item_orders,
@@ -239,3 +288,4 @@ def sales_report(request):
         )
 
     return response
+

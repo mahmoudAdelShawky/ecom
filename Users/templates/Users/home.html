@@ -1,48 +1,799 @@
 {% extends "Users/base.html" %}
+{% load custom_filters %}
 {% block content %}
+<style>
+  @media (max-width: 768px) {
+    .container{
+      padding: 0.2rem;
+    }
+    .card .product-image-container img{
+      width: 100%;
+      border-radius: 6px;
+    }
+    .card .product-image-container {
+      padding: 0.2rem;
+    }
+      
+  }
+</style>
 <div class="container">
-  <h1>User Homepage</h1>
-  {% if items %}
-  <form action="" method="get" class="mb-4">
-    <label for="sort_by">Sort by:</label>
-    <select name="sort_by" id="sort_by" onchange="this.form.submit()">
-      <option value="">Relevance</option>
-      <option value="orders" {% if request.GET.sort_by == 'orders' %}selected{% endif %}>Number of Orders</option>
-      <option value="price_low_high" {% if request.GET.sort_by == 'price_low_high' %}selected{% endif %}>Price (Low to High)</option>
-      <option value="price_high_low" {% if request.GET.sort_by == 'price_high_low' %}selected{% endif %}>Price (High to Low)</option>
-      <option value="average_rating" {% if request.GET.sort_by == 'average_rating' %}selected{% endif %}>Average Rating</option>
-    </select>
-  </form>
-  <div class="row">
-    {% for item in items %}
-    <div class="col-md-4 mb-4">
-      <div class="card">
-        <div class="card-img-container">
-        <img src="{{ item.item_image.url }}" alt="{{ item.item_title }}">
-        </div>
-        <div class="card-body">
-          <h5 class="card-title"><a href="{% url 'item-detail' item.pk %}">{{ item.item_title }}</a></h5>
-          <p class="card-text">{{ item.item_description }}</p>
-          {% if item.item_discount %}
-          <p class="card-text">Price: <s>${{ item.item_price }}</s> ${{ item.selling_price }}</p>
-          {% else %}
-          <p class="card-text">Price: ${{ item.item_price }}</p>
-          {% endif %}
-          {% if item.average_rating  %}
-          <p class="card-text">Rating: {{ item.average_rating }}/5</p>
-          {% endif %}
-          <a class="btn btn-primary btn-sm" href="{% url 'add-to-cart' item.pk %}">Add to Cart</a>
-          <a class="btn btn-warning btn-sm" href="{% url 'add-to-wishlist' item.pk %}">Wishlist</a>
-        </div>
+  <div class="content-section">
+    <!-- Search and Sort Section -->
+    <div class="row mb-4">
+      <!-- Mobile Search Button -->
+      <div class="col-12 d-md-none mb-3">
+        <button class="btn btn-light w-100 search-toggle" data-bs-toggle="modal" data-bs-target="#searchModal">
+          <i class="fas fa-search"></i> Search Products...
+        </button>
+      </div>
+      
+      <!-- Desktop Search -->
+      <div class="col-md-8 d-none d-md-block">
+        <form action="" method="get" class="search-form">
+          <div class="input-group">
+            <input type="text" name="search" class="form-control search-input" 
+                   placeholder="Search products..." 
+                   value="{{ request.GET.search|default:'' }}">
+            <button class="btn btn-warning" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+      <div class="col-md-4">
+        <form action="" method="get" class="sort-form">
+          <select name="sort_by" class="form-select" onchange="this.form.submit()">
+            <option value="" {% if not request.GET.sort_by %}selected{% endif %}>Sort by Featured</option>
+            <option value="orders" {% if request.GET.sort_by == 'orders' %}selected{% endif %}>Best Sellers</option>
+            <option value="price_low_high" {% if request.GET.sort_by == 'price_low_high' %}selected{% endif %}>Price: Low to High</option>
+            <option value="price_high_low" {% if request.GET.sort_by == 'price_high_low' %}selected{% endif %}>Price: High to Low</option>
+            <option value="average_rating" {% if request.GET.sort_by == 'average_rating' %}selected{% endif %}>Avg. Customer Review</option>
+            <option value="newest" {% if request.GET.sort_by == 'newest' %}selected{% endif %}>Newest Arrivals</option>
+            
+           
+          </select>
+        </form>
       </div>
     </div>
-    {% endfor %}
+
+    <!-- Products Grid -->
+    {% if items %}
+      <div class="row">
+        {% for item in items %}
+        <div class="col-12 mb-4">
+          <div class="card product-card h-100">
+            <div class="row g-0">
+              <!-- Product Image -->
+              <div class="col-md-3">
+                <div class="product-image-container">
+                  
+                  <img src="{{ item.item_image.url }}" alt="{{ item.item_title }}" class="product-image "  style="height: 200px; object-fit: cover;">
+                  
+                  {% if item.item_discount %}
+                    <span class="discount-badge">
+                      <i class="fas fa-tag"></i> {{ item.item_discount }}% OFF
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+              <!-- Product Details -->
+              <div class="col-md-9">
+                <div class="card-body">
+                  <div class="product-title">
+                    <a href="{% url 'item-detail' item.pk %}" class="text-decoration-none">
+                      <h5 class="mb-1">
+                        {% if request.GET.search %}
+                        {{ item.item_title|highlight:request.GET.search|safe }}
+                        {% else %}
+                        {{ item.item_title }}
+                        {% endif %}
+                      </h5>
+                    </a>
+                  </div>
+                  
+                  <!-- Rating Section -->
+                  {% if item.average_rating %}
+                    <div class="rating mb-2">
+                      {% with ''|center:item.average_rating|make_list as stars %}
+                      {% for _ in stars %}
+                        <i class="fas fa-star"></i>
+                      {% endfor %}
+                      {% endwith %}
+                      <span class="rating-count">{{ item.average_rating }} out of 5</span>
+                    </div>
+                  {% endif %}
+
+                  <!-- Price Section -->
+                  <div class="price-section mb-2">
+                    {% if item.item_discount %}
+                      <span class="price-label">Deal Price:</span>
+                      <span class="final-price">EGP {{ item.selling_price }}</span>
+                      <span class="original-price">List Price: EGP {{ item.item_price }}</span>
+                      <span class="savings">You Save: EGP {{ item.item_price|subtract:item.selling_price }}</span>
+                    {% else %}
+                      <span class="final-price">EGP {{ item.item_price }}</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Stock Status -->
+                  <div class="stock-status mb-2">
+                    {% if item.item_stock > 0 %}
+                      <span class="in-stock">
+                        <i class="fas fa-check-circle"></i> In Stock ({{ item.item_stock }} available)
+                      </span>
+                    {% else %}
+                      <span class="out-of-stock">
+                        <i class="fas fa-times-circle"></i> Out of Stock
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Product Description -->
+                  <p class="card-text description mb-3">
+                    {% if request.GET.search %}
+                        {{ item.item_description|truncatechars:200|highlight:request.GET.search|safe }}
+                        {% else %}
+                        {{ item.item_description|truncatechars:200 }}
+                        {% endif %}
+                    </p>
+
+                  <!-- Action Buttons -->
+                  <div class="action-buttons">
+                    <a href="{% url 'add-to-cart' item.pk %}" class="btn btn-warning add-to-cart">
+                      <i class="fas fa-cart-plus"></i> Add to Cart
+                    </a>
+                    <a href="{% url 'add-to-wishlist' item.pk %}" class="btn btn-light wishlist">
+                      <i class="far fa-heart"></i> Add to List
+                    </a>
+                    <a href="{% url 'item-detail' item.pk %}" class="btn btn-light details">
+                      <i class="fas fa-info-circle"></i> View Details
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% elif request.GET.search %}
+        <p>No results found for "{{ request.GET.search }}"</p>
+    {% else %}
+    
+      <div class="text-center py-5">
+        <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
+        <h3 class="text-muted">No products found</h3>
+        <p class="text-muted">Try adjusting your search criteria</p>
+      </div>
+    {% endif %}
   </div>
-  {% else %}
-  <p>
-    <h3>Just like the old days, there's nobody here.</h3>
-    <h3>Add some items(as a vendor) to get the party started!</h3>
-  </p>
-  {% endif %}
 </div>
+
+<!-- Search Modal -->
+
+<!-- Desktop Search -->
+<!-- <div class="col-md-8 d-none d-md-block position-relative">
+  <form action="" method="get" class="search-form" autocomplete="off">
+    <div class="input-group search-group">
+      <input type="text" name="search" class="form-control search-input" 
+             placeholder="Search products..." 
+             value="{{ request.GET.search|default:'' }}" 
+             id="mainSearchInput" aria-label="Search products">
+      <button class="btn btn-warning" type="submit">
+        <i class="fas fa-search"></i>
+      </button>
+      <button type="button" class="btn btn-light clear-btn d-none" id="clearSearchBtn" tabindex="-1">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="search-suggestions shadow d-none" id="searchSuggestions"></div>
+  </form>
+</div>
+ ...existing code... -->
+
+
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen-sm-down">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <form action="" method="get" class="search-form w-100" autocomplete="off">
+          <div class="input-group search-group">
+            <input type="text" name="search" class="form-control search-input"
+                   placeholder="Search products..."
+                   value="{{ request.GET.search|default:'' }}"
+                   autofocus id="modalSearchInput" aria-label="Search products">
+            <button class="btn btn-warning" type="submit">
+              <i class="fas fa-search"></i>
+            </button>
+            <button type="button" class="btn btn-light clear-btn d-none" id="clearModalSearchBtn" tabindex="-1">
+              <i class="fas fa-times"></i>
+            </button>
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="search-suggestions shadow d-none" id="modalSearchSuggestions"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ...existing code... -->
+<!-- ...existing code... -->
+
+<style>
+  /* ...existing styles... */
+.search-group {
+  position: relative;
+}
+.search-input {
+  border-radius: 24px 0 0 24px;
+  padding-left: 1.5rem;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s;
+}
+.search-input:focus {
+  border-color: #FF9900;
+  box-shadow: 0 0 0 3px rgba(255,153,0,0.13);
+  background: #fffbe7;
+}
+.btn-warning {
+  border-radius: 0 24px 24px 0;
+}
+.clear-btn {
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  border-radius: 50%;
+  padding: 0.3rem 0.5rem;
+  color: #888;
+  background: transparent;
+  border: none;
+}
+.clear-btn:focus {
+  outline: none;
+  background: #f3f3f3;
+}
+.search-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+  border: 1px solid #eee;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 10;
+  font-size: 1rem;
+}
+.search-suggestions .suggestion {
+  padding: 0.7rem 1.2rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.search-suggestions .suggestion:hover,
+.search-suggestions .suggestion.active {
+  background: #f7f7f7;
+}
+.search-suggestions .no-results {
+  color: #888;
+  padding: 0.7rem 1.2rem;
+}
+@media (max-width: 768px) {
+  .search-suggestions {
+    font-size: 1rem;
+  }
+  .clear-btn {
+    right: 60px;
+  }
+}
+  /* Amazon-like Styling */
+  .product-card {
+    border: 1px solid #e3e3e3;
+    border-radius: 8px;
+    background: white;
+  }
+
+  .product-card:hover {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-color: #d5d9d9;
+  }
+
+  .product-image-container {
+    position: relative;
+    height: 200px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-image {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+  }
+
+  .discount-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #cc0c39;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .product-title h5 {
+    color: #0F1111;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  .product-title a:hover {
+    color: #c45500;
+  }
+
+  .rating {
+    color: #FFA41C;
+  }
+
+  .rating-count {
+    color: #007185;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+  }
+
+  .price-section {
+    font-size: 0.9rem;
+  }
+
+  .price-label {
+    color: #565959;
+    margin-right: 0.5rem;
+  }
+
+  .final-price {
+    color: #B12704;
+    font-size: 1.2rem;
+    font-weight: 500;
+  }
+
+  .original-price {
+    color: #565959;
+    text-decoration: line-through;
+    margin-left: 0.5rem;
+  }
+
+  .savings {
+    color: #B12704;
+    margin-left: 0.5rem;
+  }
+
+  .stock-status {
+    font-size: 0.9rem;
+  }
+
+  .in-stock {
+    color: #007600;
+  }
+
+  .out-of-stock {
+    color: #B12704;
+  }
+
+  .description {
+    color: #565959;
+    font-size: 0.9rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .add-to-cart {
+    background-color: #FFD814;
+    border-color: #FCD200;
+    color: #0F1111;
+    font-weight: 500;
+  }
+
+  .add-to-cart:hover {
+    background-color: #F7CA00;
+  }
+
+  .wishlist, .details {
+    border-color: #D5D9D9;
+    color: #0F1111;
+  }
+
+  .wishlist:hover, .details:hover {
+    background-color: #F7FAFA;
+  }
+
+  /* Search and Sort Styling */
+  .search-input {
+    border-color: #D5D9D9;
+  }
+
+  .search-input:focus {
+    border-color: #FF9900;
+    box-shadow: 0 0 0 3px rgba(255,153,0,0.1);
+  }
+
+  .form-select {
+    border-color: #D5D9D9;
+  }
+
+  .form-select:focus {
+    border-color: #FF9900;
+    box-shadow: 0 0 0 3px rgba(255,153,0,0.1);
+  }
+
+  .search-suggestions .suggestion mark {
+    background: #ffd814;
+    color: #0f1111;
+    padding: 0 2px;
+    border-radius: 2px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 768px) {
+    
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+    
+    .product-image-container {
+      height: 150px;
+    }
+    
+  }
+
+  /* Search Modal Styles */
+  .search-toggle {
+    border: 1px solid #D5D9D9;
+    text-align: left;
+    color: #565959;
+    background: #F7FAFA;
+  }
+
+  .modal-header {
+    padding: 0.5rem;
+  }
+
+  .modal-body {
+    background: #f8f9fa;
+  }
+
+  .recent-searches {
+    padding: 1rem;
+  }
+
+  .badge {
+    padding: 0.5rem 1rem;
+    font-weight: normal;
+    border: 1px solid #D5D9D9;
+  }
+
+  .badge:hover {
+    background: #e9ecef !important;
+  }
+
+  /* Mobile Styles */
+  @media (max-width: 768px) {
+    .search-toggle {
+      padding: 0.8rem;
+      font-size: 1rem;
+    }
+
+    .modal-content {
+      border-radius: 0;
+    }
+
+    .modal .search-input {
+      height: 45px;
+      font-size: 1rem;
+    }
+
+    .modal .btn {
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+  }
+  
+</style>
+
+<script>
+  
+function setupSearchBar(inputId, suggestionsId, clearBtnId) {
+  const input = document.getElementById(inputId);
+  const suggestions = document.getElementById(suggestionsId);
+  const clearBtn = document.getElementById(clearBtnId);
+
+  let timeout, lastQuery = "";
+
+  if (!input) return;
+
+  input.addEventListener('input', function() {
+    const query = input.value.trim();
+    clearBtn.classList.toggle('d-none', !query);
+
+    if (timeout) clearTimeout(timeout);
+    if (!query) {
+      suggestions.classList.add('d-none');
+      suggestions.innerHTML = '';
+      return;
+    }
+    timeout = setTimeout(() => {
+      fetch(`/ajax/search-suggestions/?search=${encodeURIComponent(query)}`, {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(res => res.json())
+      .then(data => {
+        suggestions.innerHTML = '';
+        if (data.suggestions && data.suggestions.length) {
+          data.suggestions.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'suggestion' + (idx === 0 ? ' active' : '');
+            div.textContent = item.title;
+            div.onclick = () => {
+              input.value = item.title;
+              suggestions.classList.add('d-none');
+              input.form.submit();
+            };
+            suggestions.appendChild(div);
+          });
+        } else {
+          suggestions.innerHTML = `<div class="no-results">No results found</div>`;
+        }
+        suggestions.classList.remove('d-none');
+      });
+    }, 250);
+  });
+
+  input.addEventListener('focus', function() {
+    if (input.value.trim()) suggestions.classList.remove('d-none');
+  });
+  input.addEventListener('blur', function() {
+    setTimeout(() => suggestions.classList.add('d-none'), 150);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    input.value = '';
+    clearBtn.classList.add('d-none');
+    suggestions.classList.add('d-none');
+    input.focus();
+  });
+
+  // Keyboard navigation
+  input.addEventListener('keydown', function(e) {
+    const items = suggestions.querySelectorAll('.suggestion');
+    if (!items.length || suggestions.classList.contains('d-none')) return;
+    let idx = Array.from(items).findIndex(i => i.classList.contains('active'));
+    if (e.key === 'ArrowDown') {
+      if (idx < items.length - 1) {
+        items[idx]?.classList.remove('active');
+        items[++idx].classList.add('active');
+      }
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      if (idx > 0) {
+        items[idx]?.classList.remove('active');
+        items[--idx].classList.add('active');
+      }
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (idx >= 0) {
+        items[idx].click();
+        e.preventDefault();
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupSearchBar('mainSearchInput', 'searchSuggestions', 'clearSearchBtn');
+  setupSearchBar('modalSearchInput', 'modalSearchSuggestions', 'clearModalSearchBtn');
+});
+  // Auto focus search input when modal opens
+  document.getElementById('searchModal').addEventListener('shown.bs.modal', function () {
+    document.querySelector('#searchModal .search-input').focus();
+  });
+
+  // Preserve search params when using sort
+  document.querySelector('.sort-form').addEventListener('change', function(e) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const searchValue = searchParams.get('search');
+    if (searchValue) {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'search';
+      input.value = searchValue;
+      this.appendChild(input);
+    }
+  });
+</script>
+
+<script>
+      // Show spinner
+    function showGlobalSpinner() {
+    document.getElementById('global-spinner').classList.add('active');
+    console.log('Spinner shown');
+    }
+    // Hide spinner
+    function hideGlobalSpinner() {
+    document.getElementById('global-spinner').classList.remove('active');
+    }
+
+    // Show spinner on all AJAX requests
+    (function() {
+    // For fetch API
+    const origFetch = window.fetch;
+    window.fetch = function() {
+        showGlobalSpinner();
+        return origFetch.apply(this, arguments)
+        .finally(hideGlobalSpinner);
+    };
+
+    // For jQuery AJAX (if you use jQuery)
+    if (window.jQuery) {
+        $(document).ajaxStart(showGlobalSpinner).ajaxStop(hideGlobalSpinner);
+    }
+    })();
+
+    // Show spinner on all form submits
+    document.addEventListener('submit', function(e) {
+    showGlobalSpinner();
+    }, true);
+
+    // Hide spinner on page load
+    window.addEventListener('load', hideGlobalSpinner);
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.querySelector('input[name="q"]');
+    const resultsContainer = document.querySelector('.row');  // Adjust this selector based on your layout
+    let searchTimeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            
+            const query = e.target.value.trim();
+            
+            searchTimeout = setTimeout(() => {
+                if (query) {
+                    performSearch(query);
+                }
+            }, 300);
+        });
+    }
+
+    async function performSearch(query) {
+        try {
+            const response = await fetch(`?q=EG{encodeURIComponent(query)}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            const data = await response.json();
+            resultsContainer.innerHTML = data.html;
+            
+            // Update URL without reloading
+            const url = new URL(window.location);
+            url.searchParams.set('q', query);
+            window.history.pushState({}, '', url);
+            
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }
+});
+
+function setupSearchBar(inputId, suggestionsId, clearBtnId) {
+  const input = document.getElementById(inputId);
+  const suggestions = document.getElementById(suggestionsId);
+  const clearBtn = document.getElementById(clearBtnId);
+
+  let timeout;
+
+  if (!input) return;
+
+  input.addEventListener('input', function() {
+    const query = input.value.trim();
+    clearBtn.classList.toggle('d-none', !query);
+
+    if (timeout) clearTimeout(timeout);
+    if (!query) {
+      suggestions.classList.add('d-none');
+      suggestions.innerHTML = '';
+      return;
+    }
+    timeout = setTimeout(() => {
+      fetch(`/ajax/search-suggestions/?search=${encodeURIComponent(query)}`, {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(res => res.json())
+      .then(data => {
+        suggestions.innerHTML = '';
+        if (data.suggestions && data.suggestions.length) {
+          data.suggestions.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.className = 'suggestion' + (idx === 0 ? ' active' : '');
+            div.innerHTML = item.highlighted; // Use highlighted HTML
+            div.onclick = () => {
+              input.value = item.title;
+              suggestions.classList.add('d-none');
+              input.form.submit();
+            };
+            suggestions.appendChild(div);
+          });
+        } else {
+          suggestions.innerHTML = `<div class="no-results">No results found</div>`;
+        }
+        suggestions.classList.remove('d-none');
+      });
+    }, 250);
+  });
+
+  input.addEventListener('focus', function() {
+    if (input.value.trim()) suggestions.classList.remove('d-none');
+  });
+  input.addEventListener('blur', function() {
+    setTimeout(() => suggestions.classList.add('d-none'), 150);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    input.value = '';
+    clearBtn.classList.add('d-none');
+    suggestions.classList.add('d-none');
+    input.focus();
+  });
+
+  // Keyboard navigation
+  input.addEventListener('keydown', function(e) {
+    const items = suggestions.querySelectorAll('.suggestion');
+    if (!items.length || suggestions.classList.contains('d-none')) return;
+    let idx = Array.from(items).findIndex(i => i.classList.contains('active'));
+    if (e.key === 'ArrowDown') {
+      if (idx < items.length - 1) {
+        items[idx]?.classList.remove('active');
+        items[++idx].classList.add('active');
+      }
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp') {
+      if (idx > 0) {
+        items[idx]?.classList.remove('active');
+        items[--idx].classList.add('active');
+      }
+      e.preventDefault();
+    } else if (e.key === 'Enter') {
+      if (idx >= 0) {
+        items[idx].click();
+        e.preventDefault();
+      }
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  setupSearchBar('mainSearchInput', 'searchSuggestions', 'clearSearchBtn');
+  setupSearchBar('modalSearchInput', 'modalSearchSuggestions', 'clearModalSearchBtn');
+});
+
+</script>
 {% endblock content %}

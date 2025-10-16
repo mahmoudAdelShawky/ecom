@@ -1,12 +1,110 @@
 {% extends "Users/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-    <div class="container">
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <br />
-            <input class="btn btn-success" type="submit" value="Submit" />
-        </form>
+<style>
+    @media (max-width: 768px) {
+        
+        #up{
+            padding: 0.1rem 0.001rem;
+        }
+        #up input{
+            font-size: 0.7rem;
+            
+        }
+        #up label{
+            font-size: 0.8rem;
+            margin: 0.2rem;
+        }
+        #up a{
+            font-size: 0.5rem;
+        }
+        #up button{
+            font-size: 0.8rem;
+        }
+        
+    }
+</style>
+<div class="container py-5" id="up">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Form Card -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white py-4">
+                    <h2 class="h4 mb-0 text-center">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {% if object %}Update Entry{% else %}Create New Entry{% endif %}
+                    </h2>
+                </div>
+                
+                <!-- Card Body -->
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Form Fields -->
+                        <div class="form-container">
+                            {{ form|crispy }}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-grid gap-3 d-md-flex justify-content-md-end mt-4">
+                            
+                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill">
+                                <i class="fas fa-check me-2"></i>Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    label {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    
+    input, textarea, select {
+        border-radius: 8px!important;
+        border: 2px solid #e2e8f0!important;
+        padding: 0.75rem 1rem!important;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease!important;
+    }
+    
+    input:focus, textarea:focus, select:focus {
+        border-color: #3b82f6!important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1)!important;
+    }
+    
+    .invalid-feedback {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+    
+    .rounded-4 {
+        border-radius: 1rem!important;
+    }
+</style>
+
+<!-- Font Awesome Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
 {% endblock content %}
