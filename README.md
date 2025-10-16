@@ -1,7 +1,9 @@
 # ecom
-A django  based management system to handle the purchase and sale of commodities 
+
+A django based management system to handle the purchase and sale of commodities
 
 <!-- GETTING STARTED -->
+
 ## Getting Started
 
 This is an example of how you may give instructions on setting up your project locally.
@@ -15,14 +17,14 @@ To get a local copy up and running follow these simple example steps.
    ```
 2. Install Relevent Packages
    ```sh
-   pip install -r Requirements.txt 
+   pip install -r Requirements.txt
    ```
-3. Connect to the database 
+3. Connect to the database
    ```sh
    Link it with your Postgresql database
    Create an .env file to store all secrets
    ```
-4. Migrations 
+4. Migrations
    ```sh
    python manage.py makemigrations
    python manage.py migrate
