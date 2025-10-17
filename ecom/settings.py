@@ -208,7 +208,7 @@ EMAIL_HOST_PASSWORD = 'lhdj kryw totx nejy'
 
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SESSION_COOKIE_SECURE = True
-
+  
 if "WEBSITE_HOSTNAME" in os.environ:
     from .azure import *
 CSRF_TRUSTED_ORIGINS = [
